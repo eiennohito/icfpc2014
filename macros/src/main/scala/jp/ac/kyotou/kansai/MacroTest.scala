@@ -31,9 +31,7 @@ object MacroTestImpl {
 
     println(code)
 
-    val q"..$exprs" = code
-
-    val res = exprs.collect {
+    val res = code.collect {
       case q"val $name = ${res: Int}" => Value(name.decodedName.toString, res)
       //case q"$x + $y" => Addition(x.name, y.name)
     }

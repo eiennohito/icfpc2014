@@ -1,1 +1,9 @@
 関西ICFPC2014のレポジトリ
+
+
+走らせるにはsbtが要る
+http://www.scala-sbt.org/　より
+
+参考：
+http://docs.scala-lang.org/overviews/quasiquotes/setup.html
+http://docs.scala-lang.org/overviews/macros/overview.html

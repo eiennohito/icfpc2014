@@ -7,5 +7,8 @@ package jp.ac.kyotou.kansai
 object Test {
   def main(args: Array[String]) {
     println(MacroTest.codeTest(12))
+    println(MacroTest.code{
+      val i = 5
+    })
   }
 }

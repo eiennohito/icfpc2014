@@ -18,4 +18,32 @@ class AstTest extends FreeSpec with Matchers {
     }
   }
 
+  "code whatever" - {
+    "whatever" in {
+      // sum
+      var code = List[Code] (
+        Ldc(10),
+        LoadF(5),
+        App(1),
+        Pop(),
+        Return(),
+        Ld(0, 0),
+        Ldc(0),
+        Comp("CEQ"),
+        SelT(9, 11),
+        Ldc(0),
+        Return(),
+        Ld(0, 0),
+        Ld(0, 0),
+        Ldc(1),
+        Arith("SUB"),
+        LoadF(5),
+        App(1),
+        Arith("ADD"),
+        Return()
+      )
+
+      println(code.map(c => c.show()).mkString("\n"))
+    }
+  }
 }

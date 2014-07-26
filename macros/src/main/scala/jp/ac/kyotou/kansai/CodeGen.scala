@@ -35,6 +35,9 @@ object CodeGen {
     code match {
       case Expression(expr) => emitExpr(expr, vars)
       case Block(content) => content.flatMap(x => emitCode(x, vars))
+      case Return(expr) => {
+        emitExpr(expr, vars) ++ List(Ret())
+      }
       case Assign(name, value) => {
         emitExpr(value, vars) ++ List(St(vars(name)._1, vars(name)._2))
       }

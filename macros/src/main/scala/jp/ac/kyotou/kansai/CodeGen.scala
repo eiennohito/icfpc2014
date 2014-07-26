@@ -7,7 +7,7 @@ case class NameGen() extends NameGenerator {
   var counter = 0
   def get(): String = {
     counter = counter + 1
-    "fresh" + counter.toString
+    counter.toString
   }
 }
 
@@ -36,22 +36,31 @@ object CodeGen {
         res = AppT(localVariables.length) :: res
         res = Label("body_" + name) :: res
         res = res.reverse
-        body.foreach(code => res = res ++ emitCode(code, variables))
-        res
+        res ++ body.flatMap(emitCode(_, variables, gen))
       }
       case _ => sys.error("!?")
     }
   }
 
-  def emitCode(code : CodeAst, vars: Map[String, (Int, Int)]): List[Code] = {
+  def emitCode(code : CodeAst, vars: Map[String, (Int, Int)], gen: NameGenerator): List[Code] = {
     code match {
       case Expression(expr) => emitExpr(expr, vars)
-      case Block(content) => content.flatMap(x => emitCode(x, vars))
+      case Block(content) => content.flatMap(x => emitCode(x, vars, gen))
       case Return(expr) => {
         emitExpr(expr, vars) ++ List(Ret())
       }
       case Assign(name, value) => {
         emitExpr(value, vars) ++ List(St(vars(name)._1, vars(name)._2))
+      }
+      case IfStatement(cond, t, f) => {
+        var res = Label("if" + gen.get()) :: emitExpr(cond, vars)
+        var trueL = "true" + gen.get()
+        var falseL = "false" + gen.get()
+        var afterL = "after" + gen.get()
+        res ++= List(SelTL(trueL, falseL))
+        res ++= Label(trueL) :: t.flatMap(emitCode(_, vars, gen))
+        res ++= List(Ldc(0), Ldc(0), Comp("CEQ"), SelTL(afterL, "terminate"))
+        res ++ (Label(falseL) :: f.flatMap(emitCode(_, vars, gen))) ++ List(Label(afterL))
       }
       case _ => sys.error("Not implemented : CodeAst")
     }

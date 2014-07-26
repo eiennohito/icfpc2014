@@ -54,6 +54,18 @@ class CodeGenTest extends FreeSpec with Matchers {
               Reference("b"))))))
 
       var code = CodeGen.emitStructure(ast, NameGen())
+      code should equal (List(
+        LoadFL("body_mod"),
+        AppT(0),
+        Label("body_mod"),
+        Ld(1, 0),
+        Ld(1, 0),
+        Ld(1, 1),
+        Arith("DIV"),
+        Ld(1, 1),
+        Arith("MUL"),
+        Arith("SUB")
+      ))
     }
   }
 
@@ -112,6 +124,25 @@ class CodeGenTest extends FreeSpec with Matchers {
       var name1 = gen.get()
       var name2 = gen.get()
       name1 should not equal (name2)
+    }
+  }
+
+  "if statement" - {
+    "whatwver" in {
+      /*
+       if 0 == 1 then 2 else 3
+       */
+      var ast = IfStatement(
+        Equals(Literal(0), Literal(1)),
+        List(Expression(Literal(2))),
+        List(Expression(Literal(3))))
+
+      var code = CodeGen.emitCode(ast, Map(), NameGen())
+      code should equal (List(
+        Label("if1"), Ldc(0), Ldc(1), Comp("CEQ"), SelTL("true2", "false3"),
+        Label("true2"), Ldc(2), Ldc(0), Ldc(0), Comp("CEQ"),
+        SelTL("after4", "terminate"), Label("false3"),
+        Ldc(3), Label("after4")))
     }
   }
 }

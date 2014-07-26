@@ -41,7 +41,8 @@ object gccCodeMacro {
             case x: Tree => transformExprTree(x)
             case x => throw new MacroException(s"unsupported tree value $x")
           })
-        case x => throw new MacroException(s"invalid function $x")
+        case q"$func(..$args)" =>
+        case x => throw new MacroException(s"unsupported expression pattern $x")
       }
     }
 
@@ -49,6 +50,7 @@ object gccCodeMacro {
       body.collect {
         case q"val $nm = ${value: Int}" => AssignConst(nm.decodedName.toString, value)
         case expr @ q"$left.$func(..$args)" => Expression(transformExprTree(expr))
+        case expr @ q"$func(..$args)" => Expression(transformExprTree(expr))
       }
     }
 

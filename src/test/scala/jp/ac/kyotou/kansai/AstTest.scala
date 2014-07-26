@@ -13,7 +13,7 @@ class AstTest extends FreeSpec with Matchers {
       val ast = List (
         Assign("x", Literal(1)),
         Assign("y", Literal(2)),
-        Assign("z", Application("+", Reference("x"), List(Reference("y"))))
+        Assign("z", Plus(Reference("x"), Reference("y")))
       )
     }
   }

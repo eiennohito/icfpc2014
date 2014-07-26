@@ -75,6 +75,7 @@ object AstCleanup {
       case x: Application => throw new RuntimeException(s"invalid application $x")
       case FunCall("tupleLast", arg :: Literal(x) :: Nil) => CdrAst(selectTupleElement(arg, x - 2))
       case FunCall("MyCons", arg1 :: arg2 :: Nil) => ConsAst(rewriteExpression(arg1), rewriteExpression(arg2))
+      case FunCall(nm, args) => FunCall(nm, args.map(rewriteExpression))
       case Reference("MyNil") => Literal(0)
       case x => x
     }

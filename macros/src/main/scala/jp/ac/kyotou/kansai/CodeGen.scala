@@ -62,6 +62,14 @@ object CodeGen {
         res ++= List(Ldc(0), Ldc(0), Comp("CEQ"), SelTL(afterL, "terminate"))
         res ++ (Label(falseL) :: f.flatMap(emitCode(_, vars, gen))) ++ List(Label(afterL))
       }
+      case WhileStatement(cond, body) => {
+        var whileL = "while" + gen.get()
+        var bodyL = "while_body" + gen.get()
+        var endL = "while_end" + gen.get()
+        var res = Label(whileL) :: emitExpr(cond, vars)
+        res ++= List(SelTL(bodyL, endL), Label(bodyL)) ++ body.flatMap(emitCode(_, vars, gen))
+        res ++ List(Ldc(0), Ldc(0), Comp("CEQ"), SelTL(whileL, "terminate"), Label(endL))
+      }
       case _ => sys.error("Not implemented : CodeAst")
     }
   }

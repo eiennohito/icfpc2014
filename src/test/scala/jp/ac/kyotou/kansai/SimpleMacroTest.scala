@@ -8,27 +8,6 @@ import org.scalatest.{Matchers, FreeSpec}
  */
 class SimpleMacroTest extends FreeSpec with Matchers {
   "macro ast transformer" - {
-    "works with a simple macro" in {
-      MacroTest.codeTest(20) should equal (60)
-    }
-
-    "transforms ast to a list" in {
-      val ast = MacroTest.code {
-        val i = 20
-      }
-
-      ast should have length (1)
-      ast.head should have (
-        'name ("i"),
-        'value (20)
-      )
-    }
-
-    "transforms a weird thing" in {
-      Something.asts.get("func") should not be (None)
-      Something.asts.size should be (3)
-    }
-
     "func3 should have rewritten AST" in {
       val ast = Something.cleanAsts.get("func3")
 
@@ -52,6 +31,21 @@ class SimpleMacroTest extends FreeSpec with Matchers {
           Assign("a",CarAst(Reference("x"))),
           Assign("b",CdrAst(CdrAst(Reference("x")))),
           Return(Plus(Reference("a"),Reference("b")))))
+
+      data.get should be (expected)
+    }
+
+    "func9 should work with lists" in {
+      val data = Something.cleanAsts.get("func9")
+
+      println(data.get)
+      val expected = FunctionDefiniton("func9",List(),
+        List(
+          Assign("list",ConsAst(Literal(1),ConsAst(Literal(2),Literal(0)))),
+          Assign("a",CarAst(Reference("list"))),
+          Assign("b",CarAst(CdrAst(Reference("list")))),
+          Return(Plus(Reference("a"),Reference("b"))))
+      )
 
       data.get should be (expected)
     }

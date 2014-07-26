@@ -51,6 +51,13 @@ class Something extends Support {
     return a + b
   }
 
+  def func9: Int = {
+    val list = MyCons(1, MyCons(2, MyNil))
+    val a = list.car
+    var b = list.cdr.car
+    return a + b
+  }
+
 }
 
 object Something extends AstCleanup {

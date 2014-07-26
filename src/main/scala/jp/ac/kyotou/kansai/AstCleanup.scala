@@ -68,9 +68,14 @@ object AstCleanup {
           case "unary_$bang" => UnaryNot(inner)
           case "unary_$minus" => UnaryMinus(inner)
           case tupleElementRe(XInt(i)) => CarAst(selectTupleElement(inner, i - 1))
+          case "car" => CarAst(inner)
+          case "cdr" => CdrAst(inner)
+          case x => throw new RuntimeException("unsupported operation")
         }
       case x: Application => throw new RuntimeException(s"invalid application $x")
       case FunCall("tupleLast", arg :: Literal(x) :: Nil) => CdrAst(selectTupleElement(arg, x - 2))
+      case FunCall("MyCons", arg1 :: arg2 :: Nil) => ConsAst(rewriteExpression(arg1), rewriteExpression(arg2))
+      case Reference("MyNil") => Literal(0)
       case x => x
     }
   }

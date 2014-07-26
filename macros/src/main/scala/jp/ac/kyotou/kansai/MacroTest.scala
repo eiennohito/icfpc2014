@@ -3,9 +3,14 @@ package jp.ac.kyotou.kansai
 import scala.language.experimental.macros
 
 
-trait Command
-case class Value(name: String, value: Int) extends Command
-case class Addition(left: Command, right: Command)
+sealed trait MyList[+T] {
+
+}
+
+case object MyNil extends MyList[Nothing]
+case class :*[+T](head: T) extends MyList[T]
+
+case class AssignConst(name: String, value: Int)
 
 /**
  * @author eiennohito
@@ -14,7 +19,7 @@ case class Addition(left: Command, right: Command)
 object MacroTest {
   def codeTest(code: Int): Int = macro MacroTestImpl.codeTest
 
-  def code(code: Any): List[Command] = macro MacroTestImpl.code
+  def code(code: Any): List[CodeAst] = macro MacroTestImpl.code
 }
 
 object MacroTestImpl {
@@ -29,15 +34,13 @@ object MacroTestImpl {
     import c.universe._
     var p: TermName = null
 
-    println(code)
-
     val res = code.collect {
-      case q"val $name = ${res: Int}" => Value(name.decodedName.toString, res)
+      case q"val $name = ${res: Int}" => AssignConst(name.decodedName.toString, res)
       //case q"$x + $y" => Addition(x.name, y.name)
     }
 
     val items = res.map {
-      case Value(a, b) => q"Value($a, $b)"
+      case AssignConst(a, b) => q"Assign($a, Literal($b))"
     }
 
     q"List(..$items)"

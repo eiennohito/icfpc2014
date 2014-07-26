@@ -23,6 +23,10 @@ class SimpleMacroTest extends FreeSpec with Matchers {
         'value (20)
       )
     }
+
+    "transforms a weird thing" in {
+      Something.asts.get("test") should be (Some(10))
+    }
   }
 
 }

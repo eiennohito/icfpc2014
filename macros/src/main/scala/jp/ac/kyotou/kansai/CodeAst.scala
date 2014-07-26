@@ -5,7 +5,6 @@ package jp.ac.kyotou.kansai
  * @since 2014-07-26
  */
 trait CodeAst
-case class AssignConst(name: String, value: Int)
 case class Assign(name: String, result: ExprAst) extends CodeAst
 case class Expression(expr: ExprAst) extends CodeAst
 

@@ -100,6 +100,14 @@ object CodeGen {
       // !!!
       case Lesser(l, r) => emitExpr(Greater(r, l), vars)
       case LesserEquals(l, r) => emitExpr(GreaterEquals(r, l), vars)
+      case UnaryNot(exp) => {
+        Ldc(1) :: emitExpr(exp, vars) ++ List(Arith("SUB"))
+      }
+      case Tuple(constrs) => {
+        var res = constrs.flatMap(emitExpr(_, vars))
+        for (i <- 0 until constrs.length - 1) res ++= List(Cons())
+        res
+      }
       case _ => sys.error("Not implemented : ExprAst")
     }
   }

@@ -23,7 +23,7 @@ object CodeGen {
         res = LoadFL("body_" + name) :: res
         res = AppT(localVariables.length) :: res
         res = Label("body_" + name) :: res
-        res.reverse
+        res = res.reverse
         body.foreach(code => res = res ++ emitCode(code, variables))
         res
       }
@@ -35,6 +35,9 @@ object CodeGen {
     code match {
       case Expression(expr) => emitExpr(expr, vars)
       case Block(content) => content.flatMap(x => emitCode(x, vars))
+      case Assign(name, value) => {
+        emitExpr(value, vars) ++ List(St(vars(name)._1, vars(name)._2))
+      }
       case _ => sys.error("Not implemented : CodeAst")
     }
   }

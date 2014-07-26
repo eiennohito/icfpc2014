@@ -17,28 +17,6 @@ case class MacroException(msg: String) extends RuntimeException(msg)
 object TreeLifters {
   import jp.ac.kyotou.{kansai => ast}
   import scala.reflect.runtime.universe._
-
-  def liftStructure(x: ast.StructureAst): Tree = x match {
-    case ast.FunctionDefiniton(name, args, code) => q"ast.FunctionDefiniton($name, $args, ${code.map(liftCode)})"
-  }
-
-  def liftCode(x: ast.CodeAst): Tree = x match {
-    case ast.Assign(name, result) => q"ast.Assign($name, ${liftExpr(result)})"
-    case ast.Expression(expr) => q"ast.Expression(${liftExpr(expr)})"
-    case ast.Return(expr) => q"ast.Return(${liftExpr(expr)})"
-    case ast.Block(expr) => q"ast.Block(${expr.map(liftCode)})"
-  }
-
-  def liftExpr (x: ast.ExprAst): Tree = x match {
-    case ast.Literal(i) => q"ast.Literal($i)"
-    case ast.FunCall(name, args) => q"ast.FunCall($name, ${args.map(liftExpr)})"
-    case ast.Plus(left, right) => q"ast.Plus(${liftExpr(left)}, ${liftExpr(right)})"
-    case ast.Minus(left, right) => q"ast.Minus(${liftExpr(left)}, ${liftExpr(right)})"
-    case ast.Multiply(left, right) => q"ast.Multiply(${liftExpr(left)}, ${liftExpr(right)})"
-    case ast.Divide(left, right) => q"ast.Divide(${liftExpr(left)}, ${liftExpr(right)})"
-    case ast.Reference(name) => q"ast.Reference($name)"
-    case ast.Application(funcName, context, args) => q"ast.Application($funcName, ${liftExpr(context)}, ${args.map(liftExpr)})"
-  }
 }
 
 object gccCodeMacro {
@@ -50,6 +28,28 @@ object gccCodeMacro {
   def macroImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     val trees = annottees.map(_.tree).toList
+
+    def liftStructure(x: StructureAst): Tree = x match {
+      case ast.FunctionDefiniton(name, args, code) => q"jp.ac.kyotou.kansai.FunctionDefiniton($name, $args, ${code.map(y => liftCode(y))})"
+    }
+
+    def liftCode(x: CodeAst): Tree = x match {
+      case ast.Assign(name, result) => q"jp.ac.kyotou.kansai.Assign($name, ${liftExpr(result)})"
+      case ast.Expression(expr) => q"jp.ac.kyotou.kansai.Expression(${liftExpr(expr)})"
+      case ast.Return(expr) => q"jp.ac.kyotou.kansai.Return(${liftExpr(expr)})"
+      case ast.Block(expr) => q"jp.ac.kyotou.kansai.Block(${expr.map(y => liftCode(y))})"
+    }
+
+    def liftExpr (x: ExprAst): Tree = x match {
+      case ast.Literal(i) => q"jp.ac.kyotou.kansai.Literal($i)"
+      case ast.FunCall(name, args) => q"jp.ac.kyotou.kansai.FunCall($name, ${args.map(y => liftExpr(y))})"
+      case ast.Plus(left, right) => q"jp.ac.kyotou.kansai.Plus(${liftExpr(left)}, ${liftExpr(right)})"
+      case ast.Minus(left, right) => q"jp.ac.kyotou.kansai.Minus(${liftExpr(left)}, ${liftExpr(right)})"
+      case ast.Multiply(left, right) => q"jp.ac.kyotou.kansai.Multiply(${liftExpr(left)}, ${liftExpr(right)})"
+      case ast.Divide(left, right) => q"jp.ac.kyotou.kansai.Divide(${liftExpr(left)}, ${liftExpr(right)})"
+      case ast.Reference(name) => q"jp.ac.kyotou.kansai.Reference($name)"
+      case ast.Application(funcName, context, args) => q"jp.ac.kyotou.kansai.Application($funcName, ${liftExpr(context)}, ${args.map(y => liftExpr(y))})"
+    }
 
     if (trees.length != 2) {
       c.error(c.enclosingPosition, "annotated class should have companion object")
@@ -127,15 +127,11 @@ object gccCodeMacro {
 
     val structure = structureObjs.map(x => x.name -> liftStructure(x))
 
-    def untupling(x: (String, scala.reflect.runtime.universe.Tree)) = {
-      q"(${x._1}, ${x._2.asInstanceOf[Tree]})"
-    }
-
     val newCompanion = companion match {
       case q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$stats }" =>
         val newstats = stats.collect {
-          case q"$mods val asts: Map[String, ast.StructureAst] = ???" =>
-            q"""$mods val asts: Map[String, ast.StructureAst] = Map(..${structure.map(x => untupling(x))})"""
+          case vx @ q"val asts: $tpe = $expr" =>
+            q"""val asts: Map[String, jp.ac.kyotou.kansai.StructureAst]  = ${structure.toMap}"""
           case x => x
         }
         q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$newstats }"

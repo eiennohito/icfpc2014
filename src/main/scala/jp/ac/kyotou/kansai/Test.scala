@@ -14,7 +14,7 @@ class Something {
 
   def func2(i1: Int, i2: Int) = i1 + i2
 
-  def func3 = 1 + 2
+  def func3 = 1 + 4
 
 }
 

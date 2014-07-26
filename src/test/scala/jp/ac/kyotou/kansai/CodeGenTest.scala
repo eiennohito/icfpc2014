@@ -145,4 +145,17 @@ class CodeGenTest extends FreeSpec with Matchers {
         Ldc(3), Label("after4")))
     }
   }
+
+  "function call" - {
+    "whatwver" in {
+      var ast = FunCall("mod",
+        List(Plus(Literal(1), Reference("a")), Minus(Reference("b"), Literal(3))))
+
+      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 0), "b" -> (0, 1)))
+      code should equal (List(
+        Ldc(1), Ld(0, 0), Arith("ADD"),
+        Ld(0, 1), Ldc(3), Arith("SUB"),
+        LoadFL("func_mod"), App(2)))
+    }
+  }
 }

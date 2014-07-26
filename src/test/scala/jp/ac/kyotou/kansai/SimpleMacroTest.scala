@@ -68,4 +68,10 @@ class SimpleMacroTest extends FreeSpec with Matchers {
     }
   }
 
+  "list of tuples" in {
+    val data = Something.cleanAsts.get("listTuple")
+    data should not be (None)
+    data.toString should not contain("MyNil")
+  }
+
 }

@@ -6,6 +6,19 @@ package jp.ac.kyotou.kansai
  */
 @gccCode
 class Something extends Support {
+
+  //必ず返す型を示さなければなりません
+  def smallest: Int = {
+    return 0 //必ず return
+  }
+
+  def usableTypes: Int = {
+    val a = 5 //Int
+    val b = (1, 2) //Tuple
+    val c = MyCons(2, MyNil) // Linked list
+    return a + b._1 //必ず returnを書くこと
+  }
+
   def func(i: Int): Int = {
     val pos = 5
     val next = func2(pos, 42)
@@ -47,7 +60,7 @@ class Something extends Support {
   def func8: Int = {
     val x = (1, 2, 3)
     val a = x._1
-    val b = tupleLast(x, 3)
+    val b = tupleLast(x, 3) //タプルの最後のやつを読むと必ずこの関数を使う
     return a + b
   }
 
@@ -63,6 +76,10 @@ class Something extends Support {
       return 0
     }
     return lst.car + lstSum(lst.cdr)
+  }
+
+  def listTuple(x: (MyList[Int], Int)): (MyList[Int], Int) = {
+    return (MyCons(5, MyNil), 3)
   }
 
 }

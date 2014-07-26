@@ -14,16 +14,10 @@ class gccCode extends StaticAnnotation {
 
 case class MacroException(msg: String) extends RuntimeException(msg)
 
-object TreeLifters {
-  import jp.ac.kyotou.{kansai => ast}
-  import scala.reflect.runtime.universe._
-}
-
 object gccCodeMacro {
   import scala.reflect.macros.whitebox.Context
 
   import jp.ac.kyotou.{kansai => ast}
-  import TreeLifters._
 
   def macroImpl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
@@ -59,7 +53,7 @@ object gccCodeMacro {
       c.error(c.enclosingPosition, "annotated class should have companion object")
     }
 
-    println(trees)
+    //println(trees)
 
     val clz :: companion :: Nil = trees
 
@@ -94,7 +88,7 @@ object gccCodeMacro {
     }
 
     def transformStatement(statement: Tree): CodeAst = {
-      println(s"transform statement: $statement")
+      //println(s"transform statement: $statement")
       statement match {
         case q"val $nm: $tp = ${value: Int}" => ast.Assign(nm.encodedName.toString, ast.Literal(value))
         case q"val $nm: $tp = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
@@ -163,6 +157,4 @@ object gccCodeMacro {
 
     c.Expr[Any](Block(List(clz, newCompanion), Literal(Constant(()))))
   }
-
-  def transformBody = ???
 }

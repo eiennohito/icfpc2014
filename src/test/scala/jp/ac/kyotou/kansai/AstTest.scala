@@ -50,7 +50,7 @@ class AstTest extends FreeSpec with Matchers {
   "emit" - {
     "whatever" in {
       var expr = Plus(Literal(1), Literal(2))
-      println(CodeGen.emitExpr(expr))
+      println(CodeGen.emitExpr(expr, Map[String, (Int, Int)]()))
     }
   }
 }

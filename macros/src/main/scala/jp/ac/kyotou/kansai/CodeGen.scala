@@ -1,25 +1,57 @@
 package jp.ac.kyotou.kansai
 
 object CodeGen {
-  def emitCode(code : CodeAst): List[Code] = {
+  def collectLocalVars(code: List[CodeAst], args: List[String]): List[String] = {
+    var variables: Set[String] = Set()
+    code.foreach(c => c match {
+      case Assign(name, _) => variables += name
+      case _ => ()
+    })
+    variables.toList.diff(args)
+  }
+
+  def emitStructure(st: StructureAst): List[Code] = {
+    st match {
+      case FunctionDefiniton(name, args, body) => {
+        var res: List[Code] = List()
+        var variables = Map[String, (Int, Int)]()
+        for ((arg, i) <- args.zipWithIndex) variables = variables + (arg -> (1, i))
+        var localVariables = collectLocalVars(body, args)
+        for ((lv, i) <- localVariables.zipWithIndex) variables = variables + (lv -> (0, i))
+        // prepare a environment frame for local variables
+        for (_ <- 0 until localVariables.length) res = Ldc(0) :: res
+        res = LoadFL("body_" + name) :: res
+        res = AppT(localVariables.length) :: res
+        res = Label("body_" + name) :: res
+        res.reverse
+        body.foreach(code => res = res ++ emitCode(code, variables))
+        res
+      }
+      case _ => sys.error("!?")
+    }
+  }
+
+  def emitCode(code : CodeAst, vars: Map[String, (Int, Int)]): List[Code] = {
     code match {
-      case Expression(expr) => emitExpr(expr)
-      case Block(content) => content.flatMap(x => emitCode(x))
+      case Expression(expr) => emitExpr(expr, vars)
+      case Block(content) => content.flatMap(x => emitCode(x, vars))
       case _ => sys.error("Not implemented : CodeAst")
     }
   }
 
-  private def emitBinaryOp(op: Code, lhs: ExprAst, rhs: ExprAst): List[Code] = {
-    emitExpr(lhs) ++ emitExpr(rhs) ++ List(op)
+  private def emitBinaryOp(op: Code, lhs: ExprAst, rhs: ExprAst,
+    vars: Map[String, (Int, Int)]): List[Code] = {
+    emitExpr(lhs, vars) ++ emitExpr(rhs, vars) ++ List(op)
   }
 
-  def emitExpr(exp : ExprAst): List[Code] = {
+  def emitExpr(exp : ExprAst, vars: Map[String, (Int, Int)]): List[Code] = {
     exp match {
       case Literal(v) => List(Ldc(v))
-      case Plus(l, r) => emitBinaryOp(Arith("ADD"), l, r)
-      case Minus(l, r) => emitBinaryOp(Arith("SUB"), l, r)
-      case Multiply(l, r) => emitBinaryOp(Arith("MUL"), l, r)
-      case Divide(l, r) => emitBinaryOp(Arith("DIV"), l, r)
+      case Plus(l, r) => emitBinaryOp(Arith("ADD"), l, r, vars)
+      case Minus(l, r) => emitBinaryOp(Arith("SUB"), l, r, vars)
+      case Multiply(l, r) => emitBinaryOp(Arith("MUL"), l, r, vars)
+      case Divide(l, r) => emitBinaryOp(Arith("DIV"), l, r, vars)
+      case Reference(name) => List(Ld(vars(name)._1, vars(name)._2))
       case _ => sys.error("Not implemented : ExprAst")
     }
   }

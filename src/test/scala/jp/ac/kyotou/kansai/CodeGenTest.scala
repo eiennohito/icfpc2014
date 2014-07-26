@@ -101,6 +101,23 @@ class CodeGenTest extends FreeSpec with Matchers {
       derefCode should not contain (SelTL("label1", "label2"))
       derefCode should contain (SelTA(1, 3))
     }
+
+    "with consective labels" in {
+      var code = List(
+        Cons(),
+        Label("label1"),
+        Label("label2"),
+        Label("label3"),
+        Car(),
+        Cdr(),
+        SelTL("label1", "label2")
+      )
+
+      var derefCode = CodeGen.dereferenceLabels(code)
+      derefCode should have length (4)
+      derefCode should not contain (SelTL("label1", "label2"))
+      derefCode should contain (SelTA(1, 1))
+    }
   }
 
   "list operators" - {

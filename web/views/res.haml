@@ -1,0 +1,21 @@
+!!! 5
+%html
+  %head
+    %title
+      Result
+    %link{:rel => "stylesheet", :href => "//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"}
+  %body
+    %div.container
+      %h3
+        With labels
+      %pre.code
+        :escaped
+          #{result[0]}
+      %h3
+        No label
+      %pre.code
+        :escaped
+          #{result[1]}
+
+    %script{:src => 'https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'}
+    %script{:src => '//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js'}

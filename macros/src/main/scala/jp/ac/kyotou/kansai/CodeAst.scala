@@ -20,6 +20,10 @@ case class Return(expr: ExprAst) extends CodeAst {
   def emit(): List[Code] = sys.error("Not implemented: Return")
 }
 
+case class Block(content: List[CodeAst]) extends CodeAst {
+  def emit(): List[Code] = content.flatMap(_.emit())
+}
+
 sealed trait ExprAst {
   def emit(): List[Code]
 }

@@ -26,6 +26,7 @@ object TreeLifters {
     case ast.Assign(name, result) => q"ast.Assign($name, ${liftExpr(result)})"
     case ast.Expression(expr) => q"ast.Expression(${liftExpr(expr)})"
     case ast.Return(expr) => q"ast.Return(${liftExpr(expr)})"
+    case ast.Block(expr) => q"ast.Block(${expr.map(liftCode)})"
   }
 
   def liftExpr (x: ast.ExprAst): Tree = x match {
@@ -83,22 +84,38 @@ object gccCodeMacro {
       }
     }
 
-    def transformDef(name: TermName, params: List[List[ValDef]], body: Tree): FunctionDefiniton = {
-      val bodyast = body.collect {
-        case q"val $nm = ${value: Int}" => ast.Assign(nm.encodedName.toString, ast.Literal(value))
+    def transformStatement(statement: Tree): CodeAst = {
+      println(s"transform statement: $statement")
+      statement match {
+        case q"val $nm: $tp = ${value: Int}" => ast.Assign(nm.encodedName.toString, ast.Literal(value))
+        case q"val $nm: $tp = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
         case expr @ q"$left.$func(..$args)" => ast.Expression(transformExprTree(expr))
         case expr @ q"$func(..$args)" => ast.Expression(transformExprTree(expr))
         case q"return $expr" => ast.Return(transformExprTree(expr))
+        case q"{ ..$stats }" => ast.Block(stats.map(transformStatement))
         case x => throw new MacroException(s"unsupported Scala statement: $x")
       }
+    }
+
+    def transformBody(body: Tree): List[CodeAst] = {
+      body match {
+        case x @ q"{..$values}" => values.map(transformStatement)
+        case _ => transformStatement(body) :: Nil
+      }
+    }
+
+    def transformDef(name: TermName, params: List[List[ValDef]], body: Tree): FunctionDefiniton = {
+
+
       FunctionDefiniton(name.encodedName.toString,
           params.flatMap(x => x.map(extractArgName)),
-          bodyast)
+          transformBody(body))
     }
 
     def extractArgName(arg: ValDef): String = {
       arg match {
-        case q"val $name: $tpe = $expr" => name.decodedName.toString
+        case q"$mods val $name: $tpe = $expr" => name.decodedName.toString
+        case q"$mods val $name: $tpe" => name.decodedName.toString
         case x => throw new MacroException(s"unsupported function argument definition $x")
       }
     }
@@ -117,7 +134,8 @@ object gccCodeMacro {
     val newCompanion = companion match {
       case q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$stats }" =>
         val newstats = stats.collect {
-          case q"$mods val asts: Map[String, StructureAst] = ???" => q"""$mods val asts: Map[String, StructureAst] = Map(..${structure.map(x => untupling(x))})"""
+          case q"$mods val asts: Map[String, ast.StructureAst] = ???" =>
+            q"""$mods val asts: Map[String, ast.StructureAst] = Map(..${structure.map(x => untupling(x))})"""
           case x => x
         }
         q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$newstats }"

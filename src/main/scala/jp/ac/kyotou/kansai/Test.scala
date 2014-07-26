@@ -82,6 +82,8 @@ class Something extends Support {
     return (MyCons(5, MyNil), 3)
   }
 
+  def oneMoreMethod: Int = return 21
+
 }
 
 object Something extends AstCleanup {

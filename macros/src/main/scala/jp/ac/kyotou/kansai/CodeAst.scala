@@ -32,20 +32,26 @@ case class Ldc(value: Int) extends Code
 case class Ld(n: Int, i: Int) extends Code
 case class St(n: Int, i: Int) extends Code
 case class Comp(tag: String) extends Code
-case class Sel(t: Int, f: Int) extends Code
+case class SelA(t: Int, f: Int) extends Code
+case class SelL(tl: String, fl: String) extends Code
 case class Join() extends Code
 
 // Funcions
-case class LoadF(addr : Int) extends Code
+case class LoadFA(addr: Int) extends Code
+case class LoadFL(label: String) extends Code
 case class App(n : Int) extends Code
 case class Ret() extends Code
 case class Pop() extends Code
 
 // Tail call extensions
-case class SelT(t: Int, f: Int) extends Code
+case class SelTA(t: Int, f: Int) extends Code
+case class SelTL(tl: String, fl: String) extends Code
 case class AppT(n: Int) extends Code
 
 // Lists
 case class Cons() extends Code
 case class Car() extends Code
 case class Cdr() extends Code
+
+// Label
+case class Label(name: String) extends Code

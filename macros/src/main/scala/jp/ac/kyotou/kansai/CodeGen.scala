@@ -31,17 +31,21 @@ object CodeGen {
       case Ld(n, i) => "LD " + n.toString + " " + i.toString
       case St(n, i) => "ST " + n.toString + " " + i.toString
       case Comp(tag) => tag
-      case Sel(t, f) => "SEL " + t.toString + " " + f.toString
+      case SelA(t, f) => "SEL " + t.toString + " " + f.toString
+      case SelL(t, f) => "SEL " + t + " " + f
       case Join() => "JOIN"
-      case LoadF(addr) => "LDF " + addr.toString
+      case LoadFA(addr) => "LDF " + addr.toString
+      case LoadFL(label) => "LDF " + label
       case App(n) => "AP " + n.toString
       case Ret() => "RTN"
       case Pop() => "DBUG"
-      case SelT(t, f) => "TSEL " + t.toString + " " + f.toString
+      case SelTA(t, f) => "TSEL " + t.toString + " " + f.toString
+      case SelTL(t, f) => "TSEL " + t + " " + f
       case AppT(n) => "TAP " + n.toString
       case Cons() => "CONS"
       case Car() => "CAR"
       case Cdr() => "CDR"
+      case Label(name) => name + ":"
       case _ => "Not implemented yet"
     }
   }

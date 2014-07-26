@@ -35,7 +35,7 @@ class CodeGenTest extends FreeSpec with Matchers {
        */
       var ast = FunctionDefiniton("f", List[String](), List(Assign("x", Literal(1))))
 
-      var code = CodeGen.emitStructure(ast)
+      var code = CodeGen.emitStructure(ast, NameGen())
       println(code.map(CodeGen.show).mkString("\n"))
     }
 
@@ -53,7 +53,7 @@ class CodeGenTest extends FreeSpec with Matchers {
               Divide(Reference("a"), Reference("b")),
               Reference("b"))))))
 
-      var code = CodeGen.emitStructure(ast)
+      var code = CodeGen.emitStructure(ast, NameGen())
     }
   }
 
@@ -103,6 +103,15 @@ class CodeGenTest extends FreeSpec with Matchers {
         Cons(),
         Cons()
       ))
+    }
+  }
+
+  "name generator" - {
+    "yields a fresh name" in {
+      var gen = NameGen()
+      var name1 = gen.get()
+      var name2 = gen.get()
+      name1 should not equal (name2)
     }
   }
 }

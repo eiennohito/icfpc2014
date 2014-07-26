@@ -1,5 +1,16 @@
 package jp.ac.kyotou.kansai
 
+trait NameGenerator {
+  def get(): String
+}
+case class NameGen() extends NameGenerator {
+  var counter = 0
+  def get(): String = {
+    counter = counter + 1
+    "fresh" + counter.toString
+  }
+}
+
 object CodeGen {
   def collectLocalVars(code: List[CodeAst], args: List[String]): List[String] = {
     var variables: Set[String] = Set()
@@ -11,7 +22,7 @@ object CodeGen {
     variables.toList.diff(args)
   }
 
-  def emitStructure(st: StructureAst): List[Code] = {
+  def emitStructure(st: StructureAst, gen: NameGenerator): List[Code] = {
     st match {
       case FunctionDefiniton(name, args, body) => {
         var res: List[Code] = List()

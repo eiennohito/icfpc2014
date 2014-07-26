@@ -1,0 +1,26 @@
+Hello, this is the entry of 2014 ICFPC by OKeiHan Team from Japan.
+
+We have implemented (Mini)Scala -> GCC compiler... in Scala using Scala macros!
+Yes, for easier development we use syntactic trees from Scala macros and produce
+a map with special AST for each function that is defined in a "compilation unit".
+Macros are good! if the hardware is a LISP machine, a good solution definitely
+should use macros!
+
+
+You need to have Java (1.6+) and sbt (http://www.scala-sbt.org/) installed, rest
+will be managed by sbt.
+
+In order to generate the output, use the run command.
+
+tl;dr
+
+$ sbt
+> run
+
+Multiple main classes detected, select one to run:
+
+ [1] jp.ac.kyotou.kansai.ModFile
+ [2] jp.ac.kyotou.kansai.AI
+
+Enter number: 2
+(Yes, select the AI file)

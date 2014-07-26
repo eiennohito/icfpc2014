@@ -62,6 +62,12 @@ object CodeGen {
       case ConsAst(l, r) => emitBinaryOp(Cons(), l, r, vars)
       case CarAst(t) => emitExpr(t, vars) ++ List(Car())
       case CdrAst(t) => emitExpr(t, vars) ++ List(Cdr())
+      case Equals(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CEQ"))
+      case Greater(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CGT"))
+      case GreaterEquals(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CGTE"))
+      // !!!
+      case Lesser(l, r) => emitExpr(Greater(r, l), vars)
+      case LesserEquals(l, r) => emitExpr(GreaterEquals(r, l), vars)
       case _ => sys.error("Not implemented : ExprAst")
     }
   }

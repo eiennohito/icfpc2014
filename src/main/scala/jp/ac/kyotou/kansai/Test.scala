@@ -58,6 +58,13 @@ class Something extends Support {
     return a + b
   }
 
+  def lstSum(lst:MyList[Int]) : Int = {
+    if (lst.cdr == MyNil) {
+      return 0
+    }
+    return lst.car + lstSum(lst.cdr)
+  }
+
 }
 
 object Something extends AstCleanup {

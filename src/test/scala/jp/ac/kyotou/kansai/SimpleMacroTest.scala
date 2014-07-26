@@ -38,7 +38,7 @@ class SimpleMacroTest extends FreeSpec with Matchers {
     "func9 should work with lists" in {
       val data = Something.cleanAsts.get("func9")
 
-      println(data.get)
+      data should not be (None)
       val expected = FunctionDefiniton("func9",List(),
         List(
           Assign("list",ConsAst(Literal(1),ConsAst(Literal(2),Literal(0)))),
@@ -47,6 +47,23 @@ class SimpleMacroTest extends FreeSpec with Matchers {
           Return(Plus(Reference("a"),Reference("b"))))
       )
 
+      data.get should be (expected)
+    }
+
+    "lstSum should not have any application" in {
+      val data = Something.cleanAsts.get("lstSum")
+
+      data should not be (None)
+
+      val expected = FunctionDefiniton("lstSum", List("lst"),
+        List(
+          IfStatement(
+            Equals(CdrAst(Reference("lst")), Literal(0)),
+            List(Return(Literal(0))),
+            List()),
+          Return(Plus(
+            CarAst(Reference("lst")),
+            FunCall("lstSum",List(CdrAst(Reference("lst"))))))))
       data.get should be (expected)
     }
   }

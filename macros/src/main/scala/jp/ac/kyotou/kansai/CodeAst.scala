@@ -14,7 +14,6 @@ case class Return(expr: ExprAst) extends CodeAst
 case class Block(content: List[CodeAst]) extends CodeAst
 case class IfStatement(condition: ExprAst, trueBranch: List[CodeAst], falseBranch: List[CodeAst]) extends CodeAst
 case class WhileStatement(condition: ExprAst, body: List[CodeAst]) extends CodeAst
-case class TupleBreakdown(names: List[String]) extends CodeAst
 
 sealed trait ExprAst
 case class Literal(value: Int) extends ExprAst

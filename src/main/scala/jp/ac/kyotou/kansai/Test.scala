@@ -5,7 +5,7 @@ package jp.ac.kyotou.kansai
  * @since 2014-07-25
  */
 @gccCode
-class Something {
+class Something extends Support {
   def func(i: Int): Int = {
     val pos = 5
     val next = func2(pos, 42)
@@ -41,7 +41,14 @@ class Something {
 
   def func7: Int = {
     val tpl = (1, 2, 3)
-    return tpl._3
+    return tpl._2
+  }
+
+  def func8: Int = {
+    val x = (1, 2, 3)
+    val a = x._1
+    val b = tupleLast(x, 3)
+    return a + b
   }
 
 }

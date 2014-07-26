@@ -24,8 +24,20 @@ object AstCleanup {
 
   val tupleElementRe = "_(\\d+)".r
 
+  val tupleName = "Tuple(\\d+)".r
+
   def selectTupleElement(ast: ExprAst, i: Int): ExprAst = {
-    ast
+    if (i == 0)
+      ast
+    else CdrAst(selectTupleElement(ast, i - 1))
+  }
+
+  def makeTuple(asts: List[ExprAst]): ExprAst = {
+    asts match {
+      case a :: Nil => throw new RewriteException(s"tuples of size 1 are unsupported")
+      case a :: b :: Nil => ConsAst(a, b)
+      case a :: xs => ConsAst(a, makeTuple(xs))
+    }
   }
 
   def rewriteExpression(expr: ExprAst): ExprAst = {
@@ -47,14 +59,18 @@ object AstCleanup {
           case x => throw new RewriteException(s"unsupported prefixed expression $x")
         }
 
+      case Application(tupleName(XInt(v)), Reference("scala"), args) =>
+        makeTuple(args)
+
       case Application(name, ctx, Nil) =>
         val inner = rewriteExpression(ctx)
         name match {
           case "unary_$bang" => UnaryNot(inner)
           case "unary_$minus" => UnaryMinus(inner)
-          case tupleElementRe(XInt(i)) => selectTupleElement(inner, i)
+          case tupleElementRe(XInt(i)) => CarAst(selectTupleElement(inner, i - 1))
         }
       case x: Application => throw new RuntimeException(s"invalid application $x")
+      case FunCall("tupleLast", arg :: Literal(x) :: Nil) => CdrAst(selectTupleElement(arg, x - 2))
       case x => x
     }
   }
@@ -67,7 +83,6 @@ object AstCleanup {
       case Block(expr) => Block(rewriteCode(expr))
       case IfStatement(cond, tb, fb) => IfStatement(rewriteExpression(cond), rewriteCode(tb), rewriteCode(fb))
       case WhileStatement(cond, bdy) => WhileStatement(rewriteExpression(cond), rewriteCode(bdy))
-      case TupleBreakdown(names) => TupleBreakdown(names)
     }
   }
 }

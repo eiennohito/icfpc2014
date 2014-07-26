@@ -41,6 +41,20 @@ class SimpleMacroTest extends FreeSpec with Matchers {
       ast should not be (None)
       ast.get should be (requred)
     }
+
+    "func8 should provide good ast for tuples" in {
+      val data = Something.cleanAsts.get("func8")
+
+      data should not be (None)
+      val expected = FunctionDefiniton("func8",List(),
+        List(
+          Assign("x",ConsAst(Literal(1),ConsAst(Literal(2),Literal(3)))),
+          Assign("a",CarAst(Reference("x"))),
+          Assign("b",CdrAst(CdrAst(Reference("x")))),
+          Return(Plus(Reference("a"),Reference("b")))))
+
+      data.get should be (expected)
+    }
   }
 
 }

@@ -25,12 +25,13 @@ object AstCleanup {
   def rewriteExpression(expr: ExprAst): ExprAst = {
     expr match {
       case Application(name, ctx, arg :: Nil) => name match {
-        case "$plus" => Plus(ctx, arg)
-        case "$minus" => Minus(ctx, arg)
-        case "$multiply" => Multiply(ctx, arg)
-        case "/" => Divide(ctx, arg)
+        case "$plus" => Plus(rewriteExpression(ctx), rewriteExpression(arg))
+        case "$minus" => Minus(rewriteExpression(ctx), rewriteExpression(arg))
+        case "$times" => Multiply(rewriteExpression(ctx), rewriteExpression(arg))
+        case "$div" => Divide(rewriteExpression(ctx), rewriteExpression(arg))
         case x => throw new RewriteException(s"unsupported prefixed expression $x")
       }
+      case x: Application => throw new RuntimeException(s"invalid application $x")
       case x => x
     }
   }

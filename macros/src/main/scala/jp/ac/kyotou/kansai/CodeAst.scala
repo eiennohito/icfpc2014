@@ -4,7 +4,6 @@ package jp.ac.kyotou.kansai
  * @author eiennohito
  * @since 2014-07-26
  */
-<<<<<<< Updated upstream
 sealed trait StructureAst
 case class FunctionDefiniton(name: String, args: List[String], code: List[CodeAst]) extends StructureAst
 
@@ -27,7 +26,9 @@ sealed trait ExprAst {
 case class Literal(value: Int) extends ExprAst {
   def emit(): List[Code] = List(Ldc(value))
 }
-case class FunCall(funcName: String, args: List[ExprAst]) extends ExprAst
+case class FunCall(funcName: String, args: List[ExprAst]) extends ExprAst {
+  def emit(): List[Code] = sys.error("Not implemented: FucCall")
+}
 case class Plus(left: ExprAst, right: ExprAst) extends ExprAst {
   def emit(): List[Code] = left.emit() ++ right.emit() ++ List(Arith("ADD"))
 }
@@ -82,7 +83,7 @@ case class LoadF(addr : Int) extends Code {
 case class App(n : Int) extends Code {
   def show(): String = "AP " + n.toString
 }
-case class Return() extends Code {
+case class Ret() extends Code {
   def show(): String = "RTN"
 }
 case class Pop() extends Code {

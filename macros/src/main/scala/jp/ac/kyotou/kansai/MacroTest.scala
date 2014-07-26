@@ -3,12 +3,6 @@ package jp.ac.kyotou.kansai
 import scala.language.experimental.macros
 
 
-sealed trait MyList[+T] {
-
-}
-
-case object MyNil extends MyList[Nothing]
-case class :*[+T](head: T) extends MyList[T]
 
 case class AssignConst(name: String, value: Int)
 

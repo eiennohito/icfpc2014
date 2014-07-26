@@ -51,6 +51,7 @@ object gccCodeMacro {
       case ast.ConsAst(left, right) => q"jp.ac.kyotou.kansai.ConsAst(${liftExpr(left)}, ${liftExpr(right)})"
       case ast.CarAst(target) => q"jp.ac.kyotou.kansai.CarAst(${liftExpr(target)})"
       case ast.CdrAst(target) => q"jp.ac.kyotou.kansai.CdrAst(${liftExpr(target)})"
+      case ast.Tuple(constrs) => q"jp.ac.kyotou.kansai.Tuple(${constrs.map(x => liftExpr(x))})"
       case _ => throw new MacroException(s"unsupported expr ast for conversion $x")
     }
 
@@ -83,6 +84,11 @@ object gccCodeMacro {
         )
         case q"${lit: Int}" => ast.Literal(lit)
         case q"${ref: TermName}" => ast.Reference(ref.decodedName.toString)
+        case q"$cont.$value" => ast.Application(value.encodedName.toString, transformExprTree(cont), Nil)
+        case q"(..$constrs)" => ast.Tuple(constrs.collect {
+          case x: Tree => transformExprTree(x)
+          case x => throw new MacroException(s"unsupported tree value $x")
+        })
         case x => throw new MacroException(s"unsupported expression pattern $x")
       }
     }
@@ -92,9 +98,20 @@ object gccCodeMacro {
       statement match {
         case q"val $nm: $tp = ${value: Int}" => ast.Assign(nm.encodedName.toString, ast.Literal(value))
         case q"val $nm: $tp = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
+        case q"var $nm: $tp = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
+        case q"${nm: TermName} = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
         case expr @ q"$left.$func(..$args)" => ast.Expression(transformExprTree(expr))
         case expr @ q"$func(..$args)" => ast.Expression(transformExprTree(expr))
         case q"return $expr" => ast.Return(transformExprTree(expr))
+        case q"if ($cond) $thenp else $elsep" => ast.IfStatement(
+          transformExprTree(cond),
+          transformBody(thenp),
+          transformBody(elsep)
+        )
+        case q"while ($cond) $body" => ast.WhileStatement(
+          transformExprTree(cond), transformBody(body)
+        )
+        case q"{}" => ast.Block(Nil)
         case q"{ ..$stats }" => ast.Block(stats.map(transformStatement))
         case x => throw new MacroException(s"unsupported Scala statement: $x")
       }
@@ -102,6 +119,7 @@ object gccCodeMacro {
 
     def transformBody(body: Tree): List[CodeAst] = {
       body match {
+        case q"{}" => Nil
         case x @ q"{..$values}" => values.map(transformStatement)
         case _ => transformStatement(body) :: Nil
       }

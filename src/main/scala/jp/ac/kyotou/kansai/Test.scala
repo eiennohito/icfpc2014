@@ -18,6 +18,32 @@ class Something {
     return 1 + 4
   }
 
+  def func4: Int = {
+    var i = 4
+    i = i + 3
+    return i - 1
+  }
+
+  def func5: Int = {
+    if (0 == 0) {
+      return 1
+    }
+    return 0
+  }
+
+  def func6: Int = {
+    var i = 0
+    while(i < 2) {
+      i = i + 1
+    }
+    return i
+  }
+
+  def func7: Int = {
+    val tpl = (1, 2, 3)
+    return tpl._3
+  }
+
 }
 
 object Something extends AstCleanup {

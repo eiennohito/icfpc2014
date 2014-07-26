@@ -34,6 +34,7 @@ case class LesserEquals(left: ExprAst, right: ExprAst) extends ExprAst
 
 //won't appear in the output
 case class Application(funcName: String, context: ExprAst, args: List[ExprAst]) extends ExprAst
+case class Tuple(constructors: List[ExprAst]) extends ExprAst
 
 // GCC instructions
 sealed trait Code

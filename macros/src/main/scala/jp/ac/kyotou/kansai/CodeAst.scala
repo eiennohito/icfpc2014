@@ -26,60 +26,26 @@ case class Reference(name: String) extends ExprAst
 case class Application(funcName: String, context: ExprAst, args: List[ExprAst]) extends ExprAst
 
 // GCC instructions
-trait Code {
-  def show() : String
-}
-case class Arith(tag: String) extends Code {
-  def show(): String = tag
-}
-case class Ldc(value: Int) extends Code {
-  def show(): String = "LDC " + value.toString
-}
-case class Ld(n: Int, i: Int) extends Code {
-  def show(): String = "LD " + n.toString + " " + i.toString
-}
-case class St(n: Int, i: Int) extends Code {
-  def show(): String = "ST " + n.toString + " " + i.toString
-}
-case class Comp(tag: String) extends Code {
-  def show(): String = tag
-}
-case class Sel(t: Int, f: Int) extends Code {
-  def show(): String = "SEL " + t.toString + " " + f.toString
-}
-case class Join() extends Code {
-  def show(): String = "JOIN"
-}
+sealed trait Code
+case class Arith(tag: String) extends Code
+case class Ldc(value: Int) extends Code
+case class Ld(n: Int, i: Int) extends Code
+case class St(n: Int, i: Int) extends Code
+case class Comp(tag: String) extends Code
+case class Sel(t: Int, f: Int) extends Code
+case class Join() extends Code
 
 // Funcions
-case class LoadF(addr : Int) extends Code {
-  def show(): String = "LDF " + addr.toString
-}
-case class App(n : Int) extends Code {
-  def show(): String = "AP " + n.toString
-}
-case class Ret() extends Code {
-  def show(): String = "RTN"
-}
-case class Pop() extends Code {
-  def show(): String = "DBUG"
-}
+case class LoadF(addr : Int) extends Code
+case class App(n : Int) extends Code
+case class Ret() extends Code
+case class Pop() extends Code
 
 // Tail call extensions
-case class SelT(t: Int, f: Int) extends Code {
-  def show(): String = "TSEL " + t.toString + " " + f.toString
-}
-case class AppT(n: Int) extends Code {
-  def show(): String = "TAP " + n.toString
-}
+case class SelT(t: Int, f: Int) extends Code
+case class AppT(n: Int) extends Code
 
 // Lists
-case class Cons() extends Code {
-  def show(): String = "CONS"
-}
-case class Car() extends Code {
-  def show(): String = "CAR"
-}
-case class Cdr() extends Code {
-  def show(): String = "CDR"
-}
+case class Cons() extends Code
+case class Car() extends Code
+case class Cdr() extends Code

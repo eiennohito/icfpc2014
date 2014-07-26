@@ -5,6 +5,7 @@ object CodeGen {
     var variables: Set[String] = Set()
     code.foreach(c => c match {
       case Assign(name, _) => variables += name
+      case Block(content) => variables ++= collectLocalVars(content, args)
       case _ => ()
     })
     variables.toList.diff(args)
@@ -86,5 +87,24 @@ object CodeGen {
       case Label(name) => name + ":"
       case _ => "Not implemented yet"
     }
+  }
+
+  def dereferenceLabels(code: List[Code]): List[Code] = {
+    var lineCount: Int = 0
+    var labelMap: Map[String, Int] = Map()
+    code.foreach(c => c match {
+      case Label(l) => labelMap += (l -> lineCount)
+      case _ => lineCount += 1
+    })
+
+    code.filter(c => c match {
+      case Label(l) => false
+      case _ => true
+    }).map(c => c match {
+      case SelL(tl, fl) => SelA(labelMap(tl), labelMap(fl))
+      case LoadFL(l) => LoadFA(labelMap(l))
+      case SelTL(tl, fl) => SelTA(labelMap(tl), labelMap(fl))
+      case x => x
+    })
   }
 }

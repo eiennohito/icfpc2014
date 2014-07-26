@@ -40,6 +40,11 @@ class CodeGenTest extends FreeSpec with Matchers {
     }
 
     "mod" in {
+      /*
+       func mod(a, b) = {
+         a - (a/b)*b
+       }
+       */
       var ast = FunctionDefiniton("mod", List("a", "b"),
         List(Expression(
           Minus(
@@ -49,9 +54,39 @@ class CodeGenTest extends FreeSpec with Matchers {
               Reference("b"))))))
 
       var code = CodeGen.emitStructure(ast)
-      println("---------- mod ----------")
-      println(code.map(CodeGen.show).mkString("\n"))
-      println("---------- mod ----------")
+    }
+  }
+
+  "dereferenceLabels" - {
+    "no label" in {
+      var code = List(
+        Cons(),
+        Car(),
+        Cdr(),
+        Ret()
+      )
+
+      var derefCode = CodeGen.dereferenceLabels(code)
+      derefCode should equal (code)
+    }
+
+    "with some labels" in {
+      var code = List(
+        Cons(),
+        Label("label1"),
+        LoadFL("label1"),
+        Car(),
+        Label("label2"),
+        SelTL("label1", "label2"),
+        Cdr()
+      )
+
+      var derefCode = CodeGen.dereferenceLabels(code)
+      derefCode should have length (code.length - 2)
+      derefCode should not contain (LoadFL("label1"))
+      derefCode should contain (LoadFA(1))
+      derefCode should not contain (SelTL("label1", "label2"))
+      derefCode should contain (SelTA(1, 3))
     }
   }
 }

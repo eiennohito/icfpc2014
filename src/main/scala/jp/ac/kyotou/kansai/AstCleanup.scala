@@ -60,7 +60,7 @@ object AstCleanup {
         }
 
       case Application(tupleName(XInt(v)), Reference("scala"), args) =>
-        makeTuple(args)
+        makeTuple(args.map(rewriteExpression))
 
       case Application(name, ctx, Nil) =>
         val inner = rewriteExpression(ctx)
@@ -73,9 +73,10 @@ object AstCleanup {
           case x => throw new RuntimeException("unsupported operation")
         }
       case x: Application => throw new RuntimeException(s"invalid application $x")
-      case FunCall("tupleLast", arg :: Literal(x) :: Nil) => CdrAst(selectTupleElement(arg, x - 2))
+      case FunCall("tupleLast", arg :: Literal(x) :: Nil) => CdrAst(selectTupleElement(rewriteExpression(arg), x - 2))
       case FunCall("MyCons", arg1 :: arg2 :: Nil) => ConsAst(rewriteExpression(arg1), rewriteExpression(arg2))
       case FunCall(nm, args) => FunCall(nm, args.map(rewriteExpression))
+      case ConsAst(left, right) => ConsAst(rewriteExpression(left), rewriteExpression(right))
       case Reference("MyNil") => Literal(0)
       case x => x
     }

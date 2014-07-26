@@ -46,4 +46,11 @@ class AstTest extends FreeSpec with Matchers {
       println(code.map(c => c.show()).mkString("\n"))
     }
   }
+
+  "emit" - {
+    "whatever" in {
+      var expr = Plus(Literal(1), Literal(2))
+      println(CodeGen.emitExpr(expr))
+    }
+  }
 }

@@ -7,52 +7,23 @@ package jp.ac.kyotou.kansai
 sealed trait StructureAst
 case class FunctionDefiniton(name: String, args: List[String], code: List[CodeAst]) extends StructureAst
 
-sealed trait CodeAst {
-  def emit(): List[Code]
-}
-case class Assign(name: String, result: ExprAst) extends CodeAst {
-  def emit(): List[Code] = sys.error("Not implemented: Assign")
-}
-case class Expression(expr: ExprAst) extends CodeAst {
-  def emit(): List[Code] = expr.emit()
-}
-case class Return(expr: ExprAst) extends CodeAst {
-  def emit(): List[Code] = sys.error("Not implemented: Return")
-}
+sealed trait CodeAst
+case class Assign(name: String, result: ExprAst) extends CodeAst
+case class Expression(expr: ExprAst) extends CodeAst
+case class Return(expr: ExprAst) extends CodeAst
+case class Block(content: List[CodeAst]) extends CodeAst
 
-case class Block(content: List[CodeAst]) extends CodeAst {
-  def emit(): List[Code] = content.flatMap(_.emit())
-}
-
-sealed trait ExprAst {
-  def emit(): List[Code]
-}
-case class Literal(value: Int) extends ExprAst {
-  def emit(): List[Code] = List(Ldc(value))
-}
-case class FunCall(funcName: String, args: List[ExprAst]) extends ExprAst {
-  def emit(): List[Code] = sys.error("Not implemented: FucCall")
-}
-case class Plus(left: ExprAst, right: ExprAst) extends ExprAst {
-  def emit(): List[Code] = left.emit() ++ right.emit() ++ List(Arith("ADD"))
-}
-case class Minus(left: ExprAst, right: ExprAst) extends ExprAst {
-  def emit(): List[Code] = left.emit() ++ right.emit() ++ List(Arith("SUB"))
-}
-case class Multiply(left: ExprAst, right: ExprAst) extends ExprAst {
-  def emit(): List[Code] = left.emit() ++ right.emit() ++ List(Arith("MUL"))
-}
-case class Divide(left: ExprAst, right: ExprAst) extends ExprAst {
-  def emit(): List[Code] = left.emit() ++ right.emit() ++ List(Arith("DIV"))
-}
-case class Reference(name: String) extends ExprAst {
-  def emit(): List[Code] = sys.error("Not implemented: Reference")
-}
+sealed trait ExprAst
+case class Literal(value: Int) extends ExprAst
+case class FunCall(funcName: String, args: List[ExprAst]) extends ExprAst
+case class Plus(left: ExprAst, right: ExprAst) extends ExprAst
+case class Minus(left: ExprAst, right: ExprAst) extends ExprAst
+case class Multiply(left: ExprAst, right: ExprAst) extends ExprAst
+case class Divide(left: ExprAst, right: ExprAst) extends ExprAst
+case class Reference(name: String) extends ExprAst
 
 //won't appear in the output
-case class Application(funcName: String, context: ExprAst, args: List[ExprAst]) extends ExprAst {
-  def emit(): List[Code] = sys.error("Not implemented: Application")
-}
+case class Application(funcName: String, context: ExprAst, args: List[ExprAst]) extends ExprAst
 
 // GCC instructions
 trait Code {

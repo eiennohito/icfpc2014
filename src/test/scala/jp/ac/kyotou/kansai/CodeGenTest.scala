@@ -55,6 +55,7 @@ class CodeGenTest extends FreeSpec with Matchers {
 
       var code = CodeGen.emitStructure(ast, NameGen())
       code should equal (List(
+        Label("func_mod"),
         LoadFL("body_mod"),
         AppT(0),
         Label("body_mod"),

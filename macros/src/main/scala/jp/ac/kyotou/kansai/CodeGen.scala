@@ -25,7 +25,7 @@ object CodeGen {
   def emitStructure(st: StructureAst, gen: NameGenerator): List[Code] = {
     st match {
       case FunctionDefiniton(name, args, body) => {
-        var res: List[Code] = List()
+        var res: List[Code] = List(Label("func_" + name))
         var variables = Map[String, (Int, Int)]()
         for ((arg, i) <- args.zipWithIndex) variables = variables + (arg -> (1, i))
         var localVariables = collectLocalVars(body, args)

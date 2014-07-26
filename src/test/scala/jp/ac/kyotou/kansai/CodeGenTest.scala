@@ -89,4 +89,20 @@ class CodeGenTest extends FreeSpec with Matchers {
       derefCode should contain (SelTA(1, 3))
     }
   }
+
+  "list operators" - {
+    "cons" in {
+      // (Cons "a" (Cons "b" 1))
+      var ast = ConsAst(Reference("a"), ConsAst(Reference("b"), Literal(1)))
+
+      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 1), "b" -> (0, 2)))
+      code should equal (List(
+        Ld(0, 1),
+        Ld(0, 2),
+        Ldc(1),
+        Cons(),
+        Cons()
+      ))
+    }
+  }
 }

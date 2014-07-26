@@ -90,7 +90,15 @@ object CodeGen {
       case Minus(l, r) => emitBinaryOp(Arith("SUB"), l, r, vars)
       case Multiply(l, r) => emitBinaryOp(Arith("MUL"), l, r, vars)
       case Divide(l, r) => emitBinaryOp(Arith("DIV"), l, r, vars)
-      case Reference(name) => List(Ld(vars(name)._1, vars(name)._2))
+      case Reference(name) => {
+        if (vars.get(name) == None) {
+          // Reference to function
+          List(LoadFL("func_" + name))
+        } else {
+          // Reference to a local variable
+          List(Ld(vars(name)._1, vars(name)._2))
+        }
+      }
       case ConsAst(l, r) => emitBinaryOp(Cons(), l, r, vars)
       case CarAst(t) => emitExpr(t, vars) ++ List(Car())
       case CdrAst(t) => emitExpr(t, vars) ++ List(Cdr())

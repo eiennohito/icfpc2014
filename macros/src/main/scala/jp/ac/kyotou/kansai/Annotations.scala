@@ -38,18 +38,20 @@ object gccCodeMacro {
       case ast.Expression(expr) => q"jp.ac.kyotou.kansai.Expression(${liftExpr(expr)})"
       case ast.Return(expr) => q"jp.ac.kyotou.kansai.Return(${liftExpr(expr)})"
       case ast.Block(expr) => q"jp.ac.kyotou.kansai.Block(${expr.map(y => liftCode(y))})"
+      case ast.IfStatement(cond, tb, fb) =>
+          q"jp.ac.kyotou.kansai.IfStatement(${liftExpr(cond)}, ${tb.map(x => liftCode(x))}, ${fb.map(x => liftCode(x))})"
+      case ast.WhileStatement(cond, bdy) => q"jp.ac.kyotou.kansai.WhileStatement(${liftExpr(cond)}, ${bdy.map(x => liftCode(x))})"
     }
 
     def liftExpr (x: ExprAst): Tree = x match {
       case ast.Literal(i) => q"jp.ac.kyotou.kansai.Literal($i)"
       case ast.FunCall(name, args) => q"jp.ac.kyotou.kansai.FunCall($name, ${args.map(y => liftExpr(y))})"
-      case ast.Plus(left, right) => q"jp.ac.kyotou.kansai.Plus(${liftExpr(left)}, ${liftExpr(right)})"
-      case ast.Minus(left, right) => q"jp.ac.kyotou.kansai.Minus(${liftExpr(left)}, ${liftExpr(right)})"
-      case ast.Multiply(left, right) => q"jp.ac.kyotou.kansai.Multiply(${liftExpr(left)}, ${liftExpr(right)})"
-      case ast.Divide(left, right) => q"jp.ac.kyotou.kansai.Divide(${liftExpr(left)}, ${liftExpr(right)})"
       case ast.Reference(name) => q"jp.ac.kyotou.kansai.Reference($name)"
       case ast.Application(funcName, context, args) => q"jp.ac.kyotou.kansai.Application($funcName, ${liftExpr(context)}, ${args.map(y => liftExpr(y))})"
-      //case ast.ConsAst(left, right) => q"jp.ac.kyotou.kansai.Application("
+      case ast.ConsAst(left, right) => q"jp.ac.kyotou.kansai.ConsAst(${liftExpr(left)}, ${liftExpr(right)})"
+      case ast.CarAst(target) => q"jp.ac.kyotou.kansai.CarAst(${liftExpr(target)})"
+      case ast.CdrAst(target) => q"jp.ac.kyotou.kansai.CdrAst(${liftExpr(target)})"
+      case _ => throw new MacroException(s"unsupported expr ast for conversion $x")
     }
 
     if (trees.length != 2) {

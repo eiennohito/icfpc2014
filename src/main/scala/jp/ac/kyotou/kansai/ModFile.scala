@@ -15,6 +15,8 @@ object ModFile extends AstCleanup {
   val asts = ???
 
   def main(args: Array[String]) {
-    println(CodeGen.emitStructure(cleanAsts.get("mod").get).map(CodeGen.show).mkString("", "\n", ""))
+    var gen = NameGen()
+    println(CodeGen.emitStructure(cleanAsts.get("mod").get, NameGen())
+      .map(CodeGen.show).mkString("", "\n", ""))
   }
 }

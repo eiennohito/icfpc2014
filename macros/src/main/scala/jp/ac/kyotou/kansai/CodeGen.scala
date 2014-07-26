@@ -1,16 +1,28 @@
 package jp.ac.kyotou.kansai
 
+trait NameGenerator {
+  def get(): String
+}
+case class NameGen() extends NameGenerator {
+  var counter = 0
+  def get(): String = {
+    counter = counter + 1
+    "fresh" + counter.toString
+  }
+}
+
 object CodeGen {
   def collectLocalVars(code: List[CodeAst], args: List[String]): List[String] = {
     var variables: Set[String] = Set()
     code.foreach(c => c match {
       case Assign(name, _) => variables += name
+      case Block(content) => variables ++= collectLocalVars(content, args)
       case _ => ()
     })
     variables.toList.diff(args)
   }
 
-  def emitStructure(st: StructureAst): List[Code] = {
+  def emitStructure(st: StructureAst, gen: NameGenerator): List[Code] = {
     st match {
       case FunctionDefiniton(name, args, body) => {
         var res: List[Code] = List()
@@ -58,6 +70,15 @@ object CodeGen {
       case Multiply(l, r) => emitBinaryOp(Arith("MUL"), l, r, vars)
       case Divide(l, r) => emitBinaryOp(Arith("DIV"), l, r, vars)
       case Reference(name) => List(Ld(vars(name)._1, vars(name)._2))
+      case ConsAst(l, r) => emitBinaryOp(Cons(), l, r, vars)
+      case CarAst(t) => emitExpr(t, vars) ++ List(Car())
+      case CdrAst(t) => emitExpr(t, vars) ++ List(Cdr())
+      case Equals(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CEQ"))
+      case Greater(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CGT"))
+      case GreaterEquals(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CGTE"))
+      // !!!
+      case Lesser(l, r) => emitExpr(Greater(r, l), vars)
+      case LesserEquals(l, r) => emitExpr(GreaterEquals(r, l), vars)
       case _ => sys.error("Not implemented : ExprAst")
     }
   }
@@ -86,5 +107,24 @@ object CodeGen {
       case Label(name) => name + ":"
       case _ => "Not implemented yet"
     }
+  }
+
+  def dereferenceLabels(code: List[Code]): List[Code] = {
+    var lineCount: Int = 0
+    var labelMap: Map[String, Int] = Map()
+    code.foreach(c => c match {
+      case Label(l) => labelMap += (l -> lineCount)
+      case _ => lineCount += 1
+    })
+
+    code.filter(c => c match {
+      case Label(l) => false
+      case _ => true
+    }).map(c => c match {
+      case SelL(tl, fl) => SelA(labelMap(tl), labelMap(fl))
+      case LoadFL(l) => LoadFA(labelMap(l))
+      case SelTL(tl, fl) => SelTA(labelMap(tl), labelMap(fl))
+      case x => x
+    })
   }
 }

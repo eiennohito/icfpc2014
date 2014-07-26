@@ -21,6 +21,9 @@ case class Minus(left: ExprAst, right: ExprAst) extends ExprAst
 case class Multiply(left: ExprAst, right: ExprAst) extends ExprAst
 case class Divide(left: ExprAst, right: ExprAst) extends ExprAst
 case class Reference(name: String) extends ExprAst
+case class ConsAst(left: ExprAst, right: ExprAst) extends ExprAst
+case class CarAst(target: ExprAst) extends ExprAst
+case class CdrAst(target: ExprAst) extends ExprAst
 
 //won't appear in the output
 case class Application(funcName: String, context: ExprAst, args: List[ExprAst]) extends ExprAst

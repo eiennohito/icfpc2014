@@ -25,7 +25,21 @@ class SimpleMacroTest extends FreeSpec with Matchers {
     }
 
     "transforms a weird thing" in {
-      Something.asts.get("test") should be (Some(10))
+      Something.asts.get("func") should not be (None)
+      Something.asts.size should be (3)
+    }
+
+    "func3 should have rewritten AST" in {
+      val ast = Something.cleanAsts.get("func3")
+
+      val requred = FunctionDefiniton("func3", Nil, List(
+        Return(
+          Plus(Literal(1), Literal(4))
+        )
+      ))
+
+      ast should not be (None)
+      ast.get should be (requred)
     }
   }
 

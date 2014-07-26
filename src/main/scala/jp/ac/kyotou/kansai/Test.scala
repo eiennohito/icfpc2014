@@ -14,10 +14,12 @@ class Something {
 
   def func2(i1: Int, i2: Int) = i1 + i2
 
-  def func3 = 1 + 4
+  def func3: Int = {
+    return 1 + 4
+  }
 
 }
 
-object Something {
+object Something extends AstCleanup {
   val asts: Map[String, StructureAst] = ???
 }

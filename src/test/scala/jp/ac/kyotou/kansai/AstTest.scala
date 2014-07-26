@@ -26,7 +26,7 @@ class AstTest extends FreeSpec with Matchers {
         LoadF(5),
         App(1),
         Pop(),
-        Return(),
+        Ret(),
         Ld(0, 0),
         Ldc(0),
         Comp("CEQ"),
@@ -43,7 +43,7 @@ class AstTest extends FreeSpec with Matchers {
         Ret()
       )
 
-      println(code.map(c => c.show()).mkString("\n"))
+      println(code.map(c => CodeGen.show(c)).mkString("\n"))
     }
   }
 

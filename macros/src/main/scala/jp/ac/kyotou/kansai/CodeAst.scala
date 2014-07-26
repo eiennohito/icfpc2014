@@ -13,7 +13,7 @@ case class Expression(expr: ExprAst) extends CodeAst
 case class Return(expr: ExprAst) extends CodeAst
 case class Block(content: List[CodeAst]) extends CodeAst
 case class IfStatement(condition: ExprAst, trueBranch: CodeAst, falseBranch: CodeAst) extends CodeAst
-case class WhileStatement(condition: ExprAst, body: List[CodeAst])
+case class WhileStatement(condition: ExprAst, body: List[CodeAst]) extends CodeAst
 
 sealed trait ExprAst
 case class Literal(value: Int) extends ExprAst

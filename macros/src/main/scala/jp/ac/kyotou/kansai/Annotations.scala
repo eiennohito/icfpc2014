@@ -49,6 +49,7 @@ object gccCodeMacro {
       case ast.Divide(left, right) => q"jp.ac.kyotou.kansai.Divide(${liftExpr(left)}, ${liftExpr(right)})"
       case ast.Reference(name) => q"jp.ac.kyotou.kansai.Reference($name)"
       case ast.Application(funcName, context, args) => q"jp.ac.kyotou.kansai.Application($funcName, ${liftExpr(context)}, ${args.map(y => liftExpr(y))})"
+      //case ast.ConsAst(left, right) => q"jp.ac.kyotou.kansai.Application("
     }
 
     if (trees.length != 2) {

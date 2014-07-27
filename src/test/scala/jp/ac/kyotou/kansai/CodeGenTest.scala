@@ -243,5 +243,22 @@ class CodeGenTest extends FreeSpec with Matchers {
         SelTL("after4", "terminate"), Label("false3"),
         Ldc(3), Label("after4")))
     }
+
+    "IfExpression2" in {
+      /*
+       var a = if 0 == 1 then 3 else 4
+       */
+      var ast = Assign("a", IfExpression(
+        Equals(Literal(0), Literal(1)),
+        List(Statement(Literal(3))),
+        List(Statement(Literal(4)))
+      ))
+      var code = CodeGen.emitCode(ast, Map("a" -> (0, 1)), NameGen())
+      code should equal (List(
+        Label("if1"), Ldc(0), Ldc(1), Comp("CEQ"), SelTL("true2", "false3"),
+        Label("true2"), Ldc(3), Ldc(0), Ldc(0), Comp("CEQ"),
+        SelTL("after4", "terminate"), Label("false3"),
+        Ldc(4), Label("after4"), St(0, 1)))
+    }
   }
 }

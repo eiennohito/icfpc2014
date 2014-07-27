@@ -144,6 +144,44 @@ class CodeGenTest extends FreeSpec with Matchers {
         SelTL("after4", "terminate"), Label("false3"),
         Ldc(3), Label("after4")))
     }
+
+    "Assign" in {
+      /*
+       var a = 1 + 2
+       */
+      var ast = Assign("a", Plus(Literal(1), Literal(2)))
+      var code = CodeGen.emitCode(ast, Map("a" -> (1, 0)), NameGen())
+      code should equal (List(
+        Ldc(1), Ldc(2), Arith("ADD"), St(1, 0)
+      ))
+    }
+
+    "Return" in {
+      /*
+       return 1 + 2
+       */
+      var ast = Return(Plus(Literal(1), Literal(2)))
+      var code = CodeGen.emitCode(ast, Map(), NameGen())
+      code should equal (List(
+        Ldc(1), Ldc(2), Arith("ADD"), Ret()
+      ))
+    }
+
+    "WhileStatement" in {
+      /*
+       while (1 < 2) {
+         a = a + 1
+       }
+       */
+      var ast = WhileStatement(Lesser(Literal(1), Literal(2)),
+        List(Assign("a", Plus(Reference("a"), Literal(1)))))
+      var code = CodeGen.emitCode(ast, Map("a" -> (1, 0)), NameGen())
+      code should equal (List(
+        Label("while1"), Ldc(2), Ldc(1), Comp("CGT"),
+        SelTL("while_body2", "while_end3"), Label("while_body2"),
+        Ld(1, 0), Ldc(1), Arith("ADD"), St(1, 0),
+        Ldc(0), Ldc(0), Comp("CEQ"), SelTL("while1", "terminate"), Label("while_end3")))
+    }
   }
 
   "emitExpr" - {

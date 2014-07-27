@@ -4,8 +4,13 @@ package jp.ac.kyotou.kansai
  * @author eiennohito
  * @since 2014-07-26
  */
-sealed trait StructureAst
+sealed trait StructureAst {
+  def name: String
+}
 case class FunctionDefiniton(name: String, args: List[String], code: List[StatementAst]) extends StructureAst
+case class CaseClassDefinition(name: String, fields: List[FieldInformation]) extends StructureAst
+
+case class FieldInformation(name: String, tpe: String)
 
 sealed trait StatementAst
 case class Assign(name: String, result: ExprAst) extends StatementAst
@@ -59,7 +64,7 @@ object ForbiddenAsts {
       case x: FunctionDefiniton =>
         val string = x.toString
         forbidden.forall(y => string.contains(y))
-      case _ => false
+      case _ => true
     }.toList
   }
 

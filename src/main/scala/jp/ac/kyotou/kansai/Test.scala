@@ -108,6 +108,13 @@ class Something extends Support {
 
   def leanSyntax(i: Int, j: Int) = (i, j)._2
 
+  case class Testing(a: Int, b: (Int, Int))
+
+  def usingCaseClass(x: Testing) = {
+    val y = Testing(1, (2, 3))
+    y.a + x.a
+  }
+
 }
 
 object Something extends AstCleanup {

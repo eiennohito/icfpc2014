@@ -137,4 +137,15 @@ class SimpleMacroTest extends FreeSpec with Matchers {
     data.get should be (expected)
   }
 
+  "case classes are usable" in {
+    val data = Something.cleanAsts.get("usingCaseClass")
+    data should not be (None)
+
+    val expected = FunctionDefiniton("usingCaseClass",List("x"),
+      List(
+        Assign("y",ConsAst(Literal(1),ConsAst(Literal(2),Literal(3)))),
+        Return(Plus(CarAst(Reference("y","jp.ac.kyotou.kansai.Something.Testing")),CarAst(Reference("x","jp.ac.kyotou.kansai.Something.Testing"))))))
+    data.get should be (expected)
+  }
+
 }

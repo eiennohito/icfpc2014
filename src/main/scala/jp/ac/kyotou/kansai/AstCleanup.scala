@@ -12,17 +12,14 @@ trait AstCleanup {
 
 case class RewriteException(msg: String) extends RuntimeException(msg)
 
-object AstCleanup {
-  def cleanupAsts(asts: Map[String, StructureAst]) = {
-    asts.map {
-      case (k, v) =>
-        k -> (v match {
-          case FunctionDefiniton(name, args, code) =>
-            val withReturns = addReturn(code)
-            FunctionDefiniton(name, args, rewriteStatements(withReturns))
-        })
-    }
+class Rewriter(classes: Map[String, CaseClassDefinition]) {
+
+  def rewrite(asts: List[StatementAst]): List[StatementAst] = {
+    val withReturns = addReturn(asts)
+    rewriteStatements(withReturns)
   }
+
+  val classTypes = classes.keySet
 
   val tupleElementRe = "_(\\d+)".r
 
@@ -56,7 +53,7 @@ object AstCleanup {
     "scala.Int",
     "scala.Boolean"
   )
-  
+
   val listTypes = Set (
     "jp.ac.kyotou.kansai.MyList",
     "jp.ac.kyotou.kansai.MyCons",
@@ -82,7 +79,8 @@ object AstCleanup {
       case ApplicationAst("debug", ThisRefAst(_), arg :: Nil, _) =>
         Debug(rewriteExpression(arg))
 
-      case ApplicationAst(func, ThisRefAst(_), args, _) =>  FunCall(func, args.map(rewriteExpression))
+      case ApplicationAst(func, ThisRefAst(_), args, ctpe) if !classTypes.contains(ctpe) =>
+        FunCall(func, args.map(rewriteExpression))
 
       case ApplicationAst("at", ctx, Literal(i) :: Nil, "jp.ac.kyotou.kansai.MyList") =>
         CarAst(selectTupleElement(rewriteExpression(ctx), i))
@@ -123,6 +121,16 @@ object AstCleanup {
 
       case ApplicationAst("apply", Reference("MyList", _), args, _) =>
         if (args.isEmpty) throw new RewriteException("Can't create empty list") else makeList(args)
+
+      case ApplicationAst("apply", cnt, args, ctpe) if classTypes.contains(ctpe) =>
+        makeTuple(args.map(rewriteExpression))
+
+      case ApplicationAst(nm, cnt, Nil, ctpe) if classTypes.contains(ctpe) =>
+        val tpdef = classes.get(ctpe).get
+        val pos = tpdef.fields.indexWhere(_.name == nm)
+        if (pos == -1)
+          throw new RewriteException(s"impossible field name: $nm for case class $ctpe")
+        else selectTupleElementLen(rewriteExpression(cnt), pos + 1, tpdef.fields.length)
 
       case ApplicationAst(name, ctx, Nil, ctxtype) =>
         val inner = rewriteExpression(ctx)
@@ -174,6 +182,19 @@ object AstCleanup {
       case Block(expr) => Block(rewriteStatements(expr))
       case WhileStatement(cond, bdy) => WhileStatement(rewriteExpression(cond), rewriteStatements(bdy))
     }
+  }
+}
+
+object AstCleanup {
+  def cleanupAsts(asts: Map[String, StructureAst]): Map[String, FunctionDefiniton] = {
+    val classes = asts.collect {
+      case (k, v: CaseClassDefinition) => k -> v
+    }
+    val rewriter = new Rewriter(classes)
+    asts.collect {
+      case (k, FunctionDefiniton(name, args, code)) =>
+        k -> FunctionDefiniton(name, args, rewriter.rewrite(code))
+    }.toMap
   }
 }
 

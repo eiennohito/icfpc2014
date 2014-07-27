@@ -42,6 +42,8 @@ class gccCodeMacroImpl(val c: Context) {
 
     val structureObjs = content.flatMap {
       case q"$mods def $name[..$tparams](...$paramss): $tpt = $expr" => transformDef(name, paramss, expr) :: Nil
+      case tree @ q"$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents { $self => ..$stats }"
+        if mods.hasFlag(Flag.CASE) =>  transformClass(tree, tpname, paramss.flatten) :: Nil
       case x => throw new MacroException(s"unsupported structure: $x")
     }
 
@@ -67,8 +69,14 @@ class gccCodeMacroImpl(val c: Context) {
   implicit val liftableCode = Liftable[StatementAst] { s => liftCode(s) }
   implicit val lifatbleExpr = Liftable[ExprAst] { s => liftExpr(s) }
 
+  implicit val liftableTE = Liftable[FieldInformation] { s => s match {
+      case FieldInformation(nm, tpe) => q"jp.ac.kyotou.kansai.FieldInformation($nm, $tpe)"
+    }
+  }
+
   def liftStructure(x: StructureAst): Tree = x match {
     case ast.FunctionDefiniton(name, args, code) => q"jp.ac.kyotou.kansai.FunctionDefiniton($name, $args, $code)"
+    case ast.CaseClassDefinition(name, args) => q"jp.ac.kyotou.kansai.CaseClassDefinition($name, $args)"
   }
 
   def liftCode(x: StatementAst): Tree = x match {
@@ -162,6 +170,15 @@ class gccCodeMacroImpl(val c: Context) {
       case x @ q"{..$values}" => values.map(transformStatement)
       case _ => transformStatement(body) :: Nil
     }
+  }
+
+  def transformClass(tree: Tree, name: TypeName, params: List[ValDef]): CaseClassDefinition = {
+    val parAst = params.map {
+      case q"$mods val $nm: $tpe = $expr" => FieldInformation(nm.encodedName.toString, tpe.tpe.typeSymbol.fullName)
+      case x => throw new MacroException(s"unsupported field for case class $x")
+    }
+
+    CaseClassDefinition(tree.symbol.fullName, parAst)
   }
 
   def transformDef(name: TermName, params: List[List[ValDef]], body: Tree): FunctionDefiniton = {

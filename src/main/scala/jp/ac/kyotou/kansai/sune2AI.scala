@@ -98,7 +98,7 @@ class sune2AI extends Support {
     while (loop) {
       var y = arrayGet(queueY, qs)
       var x = arrayGet(queueX, qs)
-      debug((qs,y,x,arrayGet2D(dist, y, x)))
+      
       qs = qs + 1
 
       if (arrayGet2D(map, y, x) == 2) { // pill
@@ -111,7 +111,7 @@ class sune2AI extends Support {
         while (d < 4) {
           yy = y + arrayGet(dy, d)
           xx = x + arrayGet(dx, d)
-          debug(yy,xx)
+
           pred = true
           if (yy < 0) pred = false
           if (yy >= height) pred = false
@@ -137,8 +137,6 @@ class sune2AI extends Support {
       }
     }
 
-    debug(dist)
-    debug((nearestPillY, nearestPillX))
 
     if (nearestPillY == -1) return 0
     var lastDirection = -1
@@ -172,7 +170,6 @@ class sune2AI extends Support {
       MyList(2,1,0,0),
       MyList(1,1,0,0),
       MyList(0,2,1,0))
-    debug(bfs(map, 1, 1))
     return 0
   }
 

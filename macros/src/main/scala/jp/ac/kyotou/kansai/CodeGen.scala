@@ -130,9 +130,8 @@ object CodeGen {
         res ++ (Label(falseL) :: f.flatMap(emitCode(_, vars, gen))) ++ List(Label(afterL))
       }
       case LLLoadAst(frame, pos) => List(Ld(frame, pos))
-      case LLStoreAst(frame, pos, expr) => {
-        emitExpr(expr, vars, gen) ++ List(St(frame, pos))
-      }
+      case LLStoreAst(frame, pos, expr) => emitExpr(expr, vars, gen) ++ List(St(frame, pos))
+      case LLAllocateFrameAst(size) => List(Dum(size))
       case LLLoadFunctionAst(name) => List(LoadFL("func_" + name))
       case LLMemberCallAst(func, args) => {
         var res = args.flatMap(emitExpr(_, vars, gen))
@@ -168,6 +167,7 @@ object CodeGen {
       case Atom() => "ATOM"
       case Dbug() => "DBUG"
       case Label(name) => name + ":"
+      case Dum(s) => "DUM " + s.toString
       case _ => "Not implemented yet"
     }
   }

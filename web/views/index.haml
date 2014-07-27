@@ -1,0 +1,24 @@
+!!! 5
+%html
+  %head
+    %meta{:charset => 'utf-8'}
+    %title
+      Web compiler for MinScala
+    %link{:rel => "stylesheet", :href => "//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"}
+  %body
+    %div.container
+      %h2
+        Web interface for MinScala compiler
+      %form{:role => "form", :method => "post", :action => "/post"}
+        %div.form-group
+          %p
+            Code:
+          %textarea.form-control{:cols => "50", :rows => "30", :name => "code"}
+          %p
+            List of functions:
+          %textarea.form-control{:cols => "30", :rows => "5", :name => "funcs"}
+        %button{:type => "submit", :class => "btn btn-default"}
+          Compile!
+
+    %script{:src => 'https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'}
+    %script{:src => '//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js'}

@@ -1,0 +1,4 @@
+Usage:
+ $ bundle install
+ $ bundle exec ruby app.rb
+ $ w3m http://localhost:4567/

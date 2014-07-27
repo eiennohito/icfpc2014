@@ -9,10 +9,7 @@ end
 post '/post' do
   @code = params[:code].gsub(/#{CR}/, "")
   @funcs = params[:funcs].gsub(/#{CR}/, "")
-
-  @code_ = @funcs.split("\n").map { |func|
-    "code ++= CodeGen.emitStructure(cleanAsts.get(\"#{func}\").get, gen)"
-  }.join("\n")
+  @funcs = @funcs.split("\n")[0]
 
   @class_code = <<-EOS
 package jp.ac.kyotou.kansai
@@ -26,10 +23,7 @@ object AI extends AstCleanup {
   val asts = ???
 
   def main(args: Array[String]) {
-    var gen = NameGen()
-    var code = List[Code]()
-    #{@code_}
-    code ++= List(Label("terminate"))
+    var code = Linker.compileAndLink(cleanAsts, "#{@funcs}")
     println("<<<<<<<<<<")
     println(code.map(CodeGen.show).mkString("", "\\n", ""))
     println("----------")

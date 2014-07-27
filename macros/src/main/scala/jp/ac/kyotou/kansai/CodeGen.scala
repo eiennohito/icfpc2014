@@ -129,6 +129,16 @@ object CodeGen {
         res ++= List(Ldc(0), Ldc(0), Comp("CEQ"), SelTL(afterL, "terminate"))
         res ++ (Label(falseL) :: f.flatMap(emitCode(_, vars, gen))) ++ List(Label(afterL))
       }
+      case LLLoadAst(frame, pos) => List(Ld(frame, pos))
+      case LLStoreAst(frame, pos, expr) => {
+        emitExpr(expr, vars, gen) ++ List(St(frame, pos))
+      }
+      case LLLoadFunctionAst(name) => List(LoadFL("func_" + name))
+      case LLMemberCallAst(func, args) => {
+        var res = args.flatMap(emitExpr(_, vars, gen))
+        res ++= emitExpr(func, vars, gen)
+        res ++ List(RApp(args.length))
+      }
       case _ => sys.error("Not implemented : ExprAst")
     }
   }
@@ -146,6 +156,7 @@ object CodeGen {
       case LoadFA(addr) => "LDF " + addr.toString
       case LoadFL(label) => "LDF " + label
       case App(n) => "AP " + n.toString
+      case RApp(n) => "RAP " + n.toString
       case Ret() => "RTN"
       case Pop() => "DBUG"
       case SelTA(t, f) => "TSEL " + t.toString + " " + f.toString

@@ -1,0 +1,69 @@
+package jp.ac.kyotou.kansai
+
+@gccCode
+class hyonAI extends Support {
+  def arraySize(lst : MyList[Int]) : Int = {
+    if (lst == MyNil) {
+      return 0
+    }
+    return 1 + arraySize(lst.cdr)
+  }
+
+  def arrayInit(n : Int, value : Int) : MyList[Int] = {
+    if (n == 0) {
+      return MyNil
+    }
+    return MyCons(value, arrayInit(n - 1, value))
+  }
+
+  def arrayGet(lst : MyList[Int], index : Int) : Int = {
+    if (index == 0) {
+      return lst.car
+    }
+    return arrayGet(lst.cdr, index - 1)
+  }
+
+  def arraySet(lst : MyList[Int], index : Int, value : Int) : MyList[Int] = {
+    if (lst == MyNil) {
+      return MyNil
+    }
+    var tmp = lst.car
+    if (index == 0) {
+      tmp = value
+    }
+    return MyCons(tmp, arraySet(lst.cdr, index - 1, value))
+  }
+
+  @noinline
+  def step(state : MyList[Int], world : Int) : (Int, Int) = {
+    var dir = 0
+    var i = 0
+    while (i < 4) {
+      if (arrayGet(state, i) < arrayGet(state, dir)) {
+        dir = i
+      }
+    }
+
+    return (random(state), mod(state, 4))
+  }
+
+  def entryPoint(world: Int, undoc: Int): (Int, (MyList[Int], Int) => (Int, Int)) = {
+    return (1023, step)
+  }
+}
+
+object hyonAI extends AstCleanup {
+  val asts = ???
+
+  def main(args: Array[String]) {
+    var gen = NameGen()
+    var codeList = CodeGen.emitStructure(cleanAsts.get("entryPoint").get, gen)
+    codeList ++= CodeGen.emitStructure(cleanAsts.get("step").get, gen)
+    codeList ++= CodeGen.emitStructure(cleanAsts.get("mod").get, gen)
+    codeList ++= CodeGen.emitStructure(cleanAsts.get("random").get, gen)
+    codeList ++= List(Label("terminate"))
+    println(codeList.map(CodeGen.show).mkString("", "\n", ""))
+    println("-----")
+    println(CodeGen.dereferenceLabels(codeList).map(CodeGen.show).mkString("", "\n", ""))
+  }
+}

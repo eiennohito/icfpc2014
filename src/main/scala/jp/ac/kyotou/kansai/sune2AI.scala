@@ -66,18 +66,43 @@ class sune2AI extends Support {
     return 1 + arraySize2D(lst.cdr)
   }
 
+  def rev_aux(l: MyList[Int], r: MyList[Int]): MyList[Int] = {
+    if (l == MyNil) return r
+    return rev_aux(l.cdr, MyCons(l.car, r))
+  }
+  def rev(q: MyList[Int]): MyList[Int] = rev_aux(q, MyNil)
+
+  case class MyQueue(f: MyList[Int], b: MyList[Int])
+
+  def empty(): MyQueue = {
+    return MyQueue(MyNil, MyNil)
+  }
+  def isEmpty(q: MyQueue) = q.f == MyNil
+
+  def checkf(q: MyQueue): MyQueue = {
+    if (q.f == MyNil) {
+      return MyQueue(rev(q.b), MyNil)
+    } else {
+      return q
+    }
+  }
+
+  def push(q: MyQueue, x: Int): MyQueue = checkf(MyQueue(q.f, MyCons(x, q.b)))
+
+  def pop(q: MyQueue): (Int, MyQueue) = {
+    return (q.f.car, checkf(MyQueue(q.f.cdr, q.b)))
+  }
+  def head(q: MyQueue): Int = q.f.car
+  def tail(q: MyQueue): MyQueue = checkf(MyQueue(q.f.cdr, q.b))
+
   def bfs(map : MyList[MyList[Int]], myPos : Point, safeDirection : MyList[Int]) : Int = {
     var height = arraySize2D(map)
     var width = arraySize(map.car)
 
-    var queueSize = height * width + 10
-    var queueY = arrayInit(queueSize, 0)
-    var queueX = arrayInit(queueSize, 0)
-    var qs = 0
-    var qt = 0
-    queueY = arraySet(queueY, qt, myPos.y)
-    queueX = arraySet(queueX, qt, myPos.x)
-    qt = qt + 1
+    var queueX = empty()
+    var queueY = empty()
+    queueX = push(queueX, myPos.x)
+    queueY = push(queueY, myPos.y)
     var dist = arrayInit2D(height, width, -1)
     dist = arraySet2D(dist, myPos.y, myPos.x, 0)
     var prev = arrayInit2D(height, width, -1)
@@ -97,10 +122,10 @@ class sune2AI extends Support {
     var content = 0
     var firstLoop = true
     while (loop) {
-      var y = arrayGet(queueY, qs)
-      var x = arrayGet(queueX, qs)
-      
-      qs = qs + 1
+      var x = head(queueX)
+      var y = head(queueY)
+      queueX = tail(queueX)
+      queueY = tail(queueY)
 
       if (arrayGet2D(map, y, x) == 2) { // pill
         nearestPillY = y
@@ -128,9 +153,8 @@ class sune2AI extends Support {
             if (content != 0) {
               if (arrayGet2D(dist, yy, xx) == -1) {
                 dist = arraySet2D(dist, yy, xx, currentDist + 1)
-                queueY = arraySet(queueY, qt, yy)
-                queueX = arraySet(queueX, qt, xx)
-                qt = qt + 1
+                queueX = push(queueX, xx)
+                queueY = push(queueY, yy)
                 prev = arraySet2D(prev, yy, xx, d)
               }
             }
@@ -138,7 +162,7 @@ class sune2AI extends Support {
           d = d + 1
         }
       }
-      if (qs >= qt) {
+      if (isEmpty(queueX)) {
         loop = false
       }
       firstLoop = false

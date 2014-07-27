@@ -53,7 +53,7 @@ class SimpleMacroTest extends FreeSpec with Matchers {
       val expected = FunctionDefiniton("lstSum", List("lst"),
         List(
           IfStatement(
-            Equals(CdrAst(Reference("lst", "jp.ac.kyotou.kansai.MyList")), Literal(0)),
+            IsAtom(CdrAst(Reference("lst", "jp.ac.kyotou.kansai.MyList"))),
             List(Return(Literal(0))),
             List()),
           Return(Plus(
@@ -91,7 +91,21 @@ class SimpleMacroTest extends FreeSpec with Matchers {
         Return(Reference("x"))))
 
     data.get should be (expected)
+  }
 
+  "function isAtom generates correct ast" in {
+    val data = Something.cleanAsts.get("usingIsAtom")
+    data should not be (None)
+
+    val expected = FunctionDefiniton("usingIsAtom",List(),
+      List(Assign("x",ConsAst(Literal(1),ConsAst(Literal(2),Literal(0)))),
+        Assign("y",UnaryNot(IsAtom(Reference("x","jp.ac.kyotou.kansai.MyList")))),
+        Assign("k",IsAtom(Reference("x","jp.ac.kyotou.kansai.MyList"))),
+        Assign("z",IsAtom(Reference("x","jp.ac.kyotou.kansai.MyList"))),
+        Return(Literal(0)))
+    )
+
+    data.get should be (expected)
   }
 
 }

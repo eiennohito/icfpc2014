@@ -13,6 +13,10 @@ class ArrayEmitterTest extends Support {
   }
 }
 
+/**
+ * Specify size of arrays as a parameter to AstCleanup
+ * Size will be fixed
+ */
 object ArrayEmitterTest extends AstCleanup(3) {
   val asts = ???
 

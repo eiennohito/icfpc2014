@@ -54,13 +54,13 @@ class Something extends Support {
 
   def func7: Int = {
     val tpl = (1, 2, 3)
-    return tpl._2
+    return tpl._1
   }
 
   def func8: Int = {
     val x = (1, 2, 3)
     val a = x._1
-    val b = tupleLast(x, 3) //タプルの最後のやつを読むと必ずこの関数を使う
+    val b = x._3 //タプルの最後のやつを読むと必ずこの関数を使う
     return a + b
   }
 

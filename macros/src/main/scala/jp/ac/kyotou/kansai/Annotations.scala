@@ -33,7 +33,9 @@ class gccCodeMacroImpl(val c: Context) {
 
     val clz :: companion :: Nil = trees
 
-    val content: List[Tree] = clz match {
+    val checked = c.typecheck(clz)
+
+    val content: List[Tree] = checked match {
       case q"$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents { $self => ..$stats }" =>
         stats
     }
@@ -61,13 +63,17 @@ class gccCodeMacroImpl(val c: Context) {
     c.Expr[Any](Block(List(clz, newCompanion), Literal(Constant(()))))
   }
 
+  implicit val liftableStructure = Liftable[StructureAst] { s => liftStructure(s) }
+  implicit val liftableCode = Liftable[CodeAst] { s => liftCode(s) }
+  implicit val lifatbleExpr = Liftable[ExprAst] { s => liftExpr(s) }
+
   def liftStructure(x: StructureAst): Tree = x match {
-    case ast.FunctionDefiniton(name, args, code) => q"jp.ac.kyotou.kansai.FunctionDefiniton($name, $args, ${code.map(y => liftCode(y))})"
+    case ast.FunctionDefiniton(name, args, code) => q"jp.ac.kyotou.kansai.FunctionDefiniton($name, $args, $code)"
   }
 
   def liftCode(x: CodeAst): Tree = x match {
-    case ast.Assign(name, result) => q"jp.ac.kyotou.kansai.Assign($name, ${liftExpr(result)})"
-    case ast.Expression(expr) => q"jp.ac.kyotou.kansai.Expression(${liftExpr(expr)})"
+    case ast.Assign(name, result) => q"jp.ac.kyotou.kansai.Assign($name, $result)"
+    case ast.Expression(expr) => q"jp.ac.kyotou.kansai.Expression($expr)"
     case ast.Return(expr) => q"jp.ac.kyotou.kansai.Return(${liftExpr(expr)})"
     case ast.Block(expr) => q"jp.ac.kyotou.kansai.Block(${expr.map(y => liftCode(y))})"
     case ast.IfStatement(cond, tb, fb) =>
@@ -78,36 +84,46 @@ class gccCodeMacroImpl(val c: Context) {
   def liftExpr (x: ExprAst): Tree = x match {
     case ast.Literal(i) => q"jp.ac.kyotou.kansai.Literal($i)"
     case ast.FunCall(name, args) => q"jp.ac.kyotou.kansai.FunCall($name, ${args.map(y => liftExpr(y))})"
-    case ast.Reference(name) => q"jp.ac.kyotou.kansai.Reference($name)"
-    case ast.Application(funcName, context, args) => q"jp.ac.kyotou.kansai.Application($funcName, ${liftExpr(context)}, ${args.map(y => liftExpr(y))})"
+    case ast.Reference(name, tpe) => q"jp.ac.kyotou.kansai.Reference($name, $tpe)"
+    case ast.Application(funcName, context, args, tpe) => q"jp.ac.kyotou.kansai.Application($funcName, $context, $args, $tpe)"
     case ast.ConsAst(left, right) => q"jp.ac.kyotou.kansai.ConsAst(${liftExpr(left)}, ${liftExpr(right)})"
     case ast.CarAst(target) => q"jp.ac.kyotou.kansai.CarAst(${liftExpr(target)})"
     case ast.CdrAst(target) => q"jp.ac.kyotou.kansai.CdrAst(${liftExpr(target)})"
     case ast.Tuple(constrs) => q"jp.ac.kyotou.kansai.Tuple(${constrs.map(x => liftExpr(x))})"
+    case ast.ThisRef(name) => q"jp.ac.kyotou.kansai.ThisRef($name)"
     case _ => throw new MacroException(s"unsupported expr ast for conversion $x")
+  }
+
+  def checkArgs(inargs: List[ValDef], outargs: List[Tree]): Boolean = {
+    if (inargs.length != outargs.length) false
+    else {
+      inargs.zip(outargs).forall {
+        case (
+          q"$mods val $nm1: $tpe = $bdy",
+          q"${nm2: TermName}"
+          ) =>
+          nm1 == nm2
+        case _ => false
+      }
+    }
   }
 
   def transformExprTree(tree: Tree): ExprAst = {
     tree match {
-      case q"$left.$func(..$args)" => ast.Application(func.encodedName.toString,
+      case q"$left.$func[..$tpe](..$args)" => ast.Application(func.encodedName.toString,
         transformExprTree(left),
         args.collect {
           case x: Tree => transformExprTree(x)
           case x => throw new MacroException(s"unsupported tree value $x")
-        })
-      case q"${func: TermName}(..$args)" => ast.FunCall(func.encodedName.toString,
-        args.collect {
-          case x: Tree => transformExprTree(x)
-          case x => throw new MacroException(s"unsupported tree value $x")
-        }
+        },
+        left.tpe.typeSymbol.fullName
       )
+      case q"$x.this" => ast.ThisRef(x.encodedName.toString)
       case q"${lit: Int}" => ast.Literal(lit)
-      case q"${ref: TermName}" => ast.Reference(ref.decodedName.toString)
-      case q"$cont.$value" => ast.Application(value.encodedName.toString, transformExprTree(cont), Nil)
-      case q"(..$constrs)" => ast.Tuple(constrs.collect {
-        case x: Tree => transformExprTree(x)
-        case x => throw new MacroException(s"unsupported tree value $x")
-      })
+      case q"${lit: Boolean}" => ast.Literal(if (lit) 1 else 0)
+      case q"${ref: TermName}" => ast.Reference(ref.decodedName.toString, tree.tpe.typeSymbol.fullName)
+      case q"$cont.$value" => ast.Application(value.encodedName.toString, transformExprTree(cont), Nil, cont.tpe.typeSymbol.fullName)
+      case q"{ (..$inargs) => $left.$call(..$outargs) }" if checkArgs(inargs, outargs) => ast.Reference(call.encodedName.toString, tree.tpe.typeSymbol.fullName)
       case x => throw new MacroException(s"unsupported expression pattern $x")
     }
   }
@@ -115,12 +131,12 @@ class gccCodeMacroImpl(val c: Context) {
   def transformStatement(statement: Tree): CodeAst = {
     //println(s"transform statement: $statement")
     statement match {
-      case q"val $nm: $tp = ${value: Int}" => ast.Assign(nm.encodedName.toString, ast.Literal(value))
-      case q"val $nm: $tp = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
-      case q"var $nm: $tp = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
+      case q"$mods val $nm: $tp = ${value: Int}" => ast.Assign(nm.encodedName.toString, ast.Literal(value))
+      case q"$mods val $nm: $tp = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
+      case q"$mods var $nm: $tp = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
       case q"${nm: TermName} = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
-      case expr @ q"$left.$func(..$args)" => ast.Expression(transformExprTree(expr))
-      case expr @ q"$func(..$args)" => ast.Expression(transformExprTree(expr))
+      case expr @ q"$left.$func[..$tpe](..$args)" => ast.Expression(transformExprTree(expr))
+      case expr @ q"$func[..$tpe](..$args)" => ast.Expression(transformExprTree(expr))
       case q"return $expr" => ast.Return(transformExprTree(expr))
       case q"if ($cond) $thenp else $elsep" => ast.IfStatement(
         transformExprTree(cond),
@@ -131,7 +147,6 @@ class gccCodeMacroImpl(val c: Context) {
         transformExprTree(cond), transformBody(body)
       )
       case q"{}" => ast.Block(Nil)
-      case q"{ ..$stats }" => ast.Block(stats.map(transformStatement))
       case x => throw new MacroException(s"unsupported Scala statement: $x")
     }
   }

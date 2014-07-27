@@ -21,6 +21,7 @@ class AI extends Support {
 	return mod(dir + 1, 4)
   }
 
+  @noinline
   def step(state : Int, world : Int) : (Int, Int) = {
     return (random(state), mod(state, 4))
   }

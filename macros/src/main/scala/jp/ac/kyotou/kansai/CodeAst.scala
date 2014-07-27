@@ -22,7 +22,7 @@ case class Plus(left: ExprAst, right: ExprAst) extends ExprAst
 case class Minus(left: ExprAst, right: ExprAst) extends ExprAst
 case class Multiply(left: ExprAst, right: ExprAst) extends ExprAst
 case class Divide(left: ExprAst, right: ExprAst) extends ExprAst
-case class Reference(name: String) extends ExprAst
+case class Reference(name: String, tpe: String = "scala.Int") extends ExprAst
 case class ConsAst(left: ExprAst, right: ExprAst) extends ExprAst
 case class CarAst(target: ExprAst) extends ExprAst
 case class CdrAst(target: ExprAst) extends ExprAst
@@ -36,8 +36,9 @@ case class UnaryNot(expr: ExprAst) extends ExprAst
 case class UnaryMinus(expr: ExprAst) extends ExprAst
 
 //won't appear in the output
-case class Application(funcName: String, context: ExprAst, args: List[ExprAst]) extends ExprAst
+case class Application(funcName: String, context: ExprAst, args: List[ExprAst], ctxType: String) extends ExprAst
 case class Tuple(constructors: List[ExprAst]) extends ExprAst
+case class ThisRef(name: String) extends ExprAst
 
 // GCC instructions
 sealed trait Code

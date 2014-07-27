@@ -90,7 +90,7 @@ object CodeGen {
       case Minus(l, r) => emitBinaryOp(Arith("SUB"), l, r, vars)
       case Multiply(l, r) => emitBinaryOp(Arith("MUL"), l, r, vars)
       case Divide(l, r) => emitBinaryOp(Arith("DIV"), l, r, vars)
-      case Reference(name) => {
+      case Reference(name, _) => {
         if (vars.get(name) == None) {
           // Reference to function
           List(LoadFL("func_" + name))

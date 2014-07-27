@@ -234,5 +234,14 @@ class CodeGenTest extends FreeSpec with Matchers {
         Ld(1, 0), Dbug()
       ))
     }
+
+    "UnaryMinus, -x" in {
+      // -(1 + 2)
+      var ast = UnaryMinus(Plus(Literal(1), Literal(2)))
+      var code = CodeGen.emitExpr(ast, Map())
+      code should equal (List(
+        Ldc(0), Ldc(1), Ldc(2), Arith("ADD"), Arith("SUB")
+      ))
+    }
   }
 }

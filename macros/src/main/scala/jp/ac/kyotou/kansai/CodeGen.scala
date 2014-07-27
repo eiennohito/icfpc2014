@@ -17,8 +17,21 @@ object CodeGen {
     code.foreach(c => c match {
       case Assign(name, _) => variables += name
       case Block(content) => variables ++= collectLocalVars(content, args)
+      case Statement(expr) => variables ++= collectLocalVarsExp(expr, args)
       case _ => ()
     })
+    variables.toList.diff(args)
+  }
+
+  def collectLocalVarsExp(expr: ExprAst, args: List[String]): List[String] = {
+    var variables: Set[String] = Set()
+    expr match {
+      case IfExpression(cond, t, f) => {
+        variables ++= collectLocalVars(t, args)
+        variables ++= collectLocalVars(f, args)
+      }
+      case _ => {}
+    }
     variables.toList.diff(args)
   }
 

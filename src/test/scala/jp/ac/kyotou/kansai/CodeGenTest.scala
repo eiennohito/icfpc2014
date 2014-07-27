@@ -24,6 +24,18 @@ class CodeGenTest extends FreeSpec with Matchers {
       var variables = CodeGen.collectLocalVars(ast, List("y"))
       variables should have length(1)
     }
+
+    "Issue #6" in {
+      var ast = List(
+        Assign("x", Literal(1)),
+        Statement(
+          IfExpression(Equals(Literal(1), Literal(2)),
+            List(Assign("y", Literal(2))),
+            List(Assign("z", Literal(3))))
+        ))
+      var variables = CodeGen.collectLocalVars(ast, List("a"))
+      variables should have length(3)
+    }
   }
 
   "emitStructure" - {

@@ -6,13 +6,6 @@ class kohamaAI extends Support {
     return a - (a / b) * b
   }
 
-  def max(a: Int, b:Int): Int = {
-    if (a > b) {
-      return a
-    }
-    return b
-  }
-
   def random(a: Int): Int = {
     return mod(a * 1664525 + 69081, 10000003)
   }
@@ -21,14 +14,15 @@ class kohamaAI extends Support {
 	return mod(dir + 1, 4)
   }
 
-  def step(state : (Int, Int, Int), world : (Int, (Int, (Int, Int)))) : (((Int, Int, Int)), Int) = {
-    var pos = tupleLast(tupleLast(world, 2), 2)
+  def step(state : (Int, Int, Int), world : (Int, (Int, (Int, Int), Int), Int)) : (((Int, Int, Int)), Int) = {
+
+    var pos = world._2._2
     var nx = pos._1
-    var ny = tupleLast(pos, 2)
+    var ny = pos._2
 
     var px = state._1
     var py = state._2
-    var seed = tupleLast(state, 3)
+    var seed = state._3
 
     if (px == nx) {
       if (py == ny) {
@@ -40,10 +34,10 @@ class kohamaAI extends Support {
     return ((nx, ny, seed), dir)
   }
 
-  def entryPoint(world: (Int, (Int, (Int, Int))) , undoc: Int): ((Int, Int, Int),  ((Int, Int, Int), (Int, (Int, (Int, Int)))) => ((Int, Int, Int), Int)) = {
-    var pos = tupleLast(tupleLast(world, 2), 2)
+  def entryPoint(world: (Int, (Int, (Int, Int), Int), Int) , undoc: Int): ((Int, Int, Int),  ((Int, Int, Int), (Int, (Int, (Int, Int), Int), Int)) => ((Int, Int, Int), Int)) = {
+    var pos = world._2._2
     var x = pos._1
-    var y = tupleLast(pos, 2)
+    var y = pos._2
     var seed = 8
     return ((x, y, seed), step)
   }

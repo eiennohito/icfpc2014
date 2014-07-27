@@ -35,14 +35,9 @@ object AI extends AstCleanup {
   val asts = ???
 
   def main(args: Array[String]) {
-    var gen = NameGen()
-	var codeList = CodeGen.emitStructure(cleanAsts.get("entryPoint").get, gen)
-       codeList ++= CodeGen.emitStructure(cleanAsts.get("step").get, gen)
-       codeList ++= CodeGen.emitStructure(cleanAsts.get("mod").get, gen)
-       codeList ++= CodeGen.emitStructure(cleanAsts.get("random").get, gen)
-       codeList ++= List(Label("terminate"))
-    println(codeList.map(CodeGen.show).mkString("", "\n", ""))
+    var code = Linker.compileAndLink(cleanAsts, "entryPoint")
+    println(code.map(CodeGen.show).mkString("", "\n", ""))
     println("-----")
-    println(CodeGen.dereferenceLabels(codeList).map(CodeGen.show).mkString("", "\n", ""))
+    println(CodeGen.dereferenceLabels(code).map(CodeGen.show).mkString("", "\n", ""))
   }
 }

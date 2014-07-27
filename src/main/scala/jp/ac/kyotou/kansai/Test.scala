@@ -60,7 +60,7 @@ class Something extends Support {
   def func8: Int = {
     val x = (1, 2, 3)
     val a = x._1
-    val b = x._3 //タプルの最後のやつを読むと必ずこの関数を使う
+    val b = x._3
     return a + b
   }
 
@@ -105,6 +105,8 @@ class Something extends Support {
     debug(x)
     return x
   }
+
+  def leanSyntax(i: Int, j: Int) = (i, j)._2
 
 }
 

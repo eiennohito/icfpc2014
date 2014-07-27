@@ -5,15 +5,14 @@ package jp.ac.kyotou.kansai
  * @since 2014-07-26
  */
 sealed trait StructureAst
-case class FunctionDefiniton(name: String, args: List[String], code: List[CodeAst]) extends StructureAst
+case class FunctionDefiniton(name: String, args: List[String], code: List[StatementAst]) extends StructureAst
 
-sealed trait CodeAst
-case class Assign(name: String, result: ExprAst) extends CodeAst
-case class Expression(expr: ExprAst) extends CodeAst
-case class Return(expr: ExprAst) extends CodeAst
-case class Block(content: List[CodeAst]) extends CodeAst
-case class IfStatement(condition: ExprAst, trueBranch: List[CodeAst], falseBranch: List[CodeAst]) extends CodeAst
-case class WhileStatement(condition: ExprAst, body: List[CodeAst]) extends CodeAst
+sealed trait StatementAst
+case class Assign(name: String, result: ExprAst) extends StatementAst
+case class Statement(expr: ExprAst) extends StatementAst
+case class Return(expr: ExprAst) extends StatementAst
+case class Block(content: List[StatementAst]) extends StatementAst
+case class WhileStatement(condition: ExprAst, body: List[StatementAst]) extends StatementAst
 
 sealed trait ExprAst
 case class Literal(value: Int) extends ExprAst
@@ -43,6 +42,7 @@ case class UnaryNot(expr: ExprAst) extends ExprAst
 case class UnaryMinus(expr: ExprAst) extends ExprAst
 case class IsAtom(expr: ExprAst) extends ExprAst
 case class Debug(expr: ExprAst) extends ExprAst
+case class IfExpression(condition: ExprAst, trueBranch: List[StatementAst], falseBranch: List[StatementAst]) extends ExprAst
 
 //won't appear in the output
 case class Application(funcName: String, context: ExprAst, args: List[ExprAst], ctxType: String) extends ExprAst

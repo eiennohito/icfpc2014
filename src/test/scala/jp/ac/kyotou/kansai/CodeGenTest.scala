@@ -8,7 +8,7 @@ class CodeGenTest extends FreeSpec with Matchers {
       var ast = List (
         Assign("x", Literal(1)),
         Assign("y", Literal(2)),
-        Expression(Plus(Reference("x"), Reference("y")))
+        Statement(Plus(Reference("x"), Reference("y")))
       )
 
       var variables = CodeGen.collectLocalVars(ast, List())
@@ -18,7 +18,7 @@ class CodeGenTest extends FreeSpec with Matchers {
     "with arguments" in {
       var ast = List (
         Assign("x", Literal(1)),
-        Expression(Plus(Reference("x"), Reference("y")))
+        Statement(Plus(Reference("x"), Reference("y")))
       )
 
       var variables = CodeGen.collectLocalVars(ast, List("y"))
@@ -44,7 +44,7 @@ class CodeGenTest extends FreeSpec with Matchers {
        }
        */
       var ast = FunctionDefiniton("mod", List("a", "b"),
-        List(Expression(
+        List(Statement(
           Minus(
             Reference("a"),
             Multiply(
@@ -128,23 +128,6 @@ class CodeGenTest extends FreeSpec with Matchers {
   }
 
   "emitCode" - {
-    "IfStatement" in {
-      /*
-       if 0 == 1 then 2 else 3
-       */
-      var ast = IfStatement(
-        Equals(Literal(0), Literal(1)),
-        List(Expression(Literal(2))),
-        List(Expression(Literal(3))))
-
-      var code = CodeGen.emitCode(ast, Map(), NameGen())
-      code should equal (List(
-        Label("if1"), Ldc(0), Ldc(1), Comp("CEQ"), SelTL("true2", "false3"),
-        Label("true2"), Ldc(2), Ldc(0), Ldc(0), Comp("CEQ"),
-        SelTL("after4", "terminate"), Label("false3"),
-        Ldc(3), Label("after4")))
-    }
-
     "Assign" in {
       /*
        var a = 1 + 2
@@ -189,7 +172,7 @@ class CodeGenTest extends FreeSpec with Matchers {
       var ast = FunCall("mod",
         List(Plus(Literal(1), Reference("a")), Minus(Reference("b"), Literal(3))))
 
-      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 0), "b" -> (0, 1)))
+      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 0), "b" -> (0, 1)), NameGen())
       code should equal (List(
         Ldc(1), Ld(0, 0), Arith("ADD"),
         Ld(0, 1), Ldc(3), Arith("SUB"),
@@ -198,7 +181,7 @@ class CodeGenTest extends FreeSpec with Matchers {
 
     "Tuple" in {
       var ast = Tuple(List(Literal(1), Literal(2), Literal(3)))
-      var code = CodeGen.emitExpr(ast, Map())
+      var code = CodeGen.emitExpr(ast, Map(), NameGen())
       var expected = List(Ldc(1), Ldc(2), Ldc(3), Cons(), Cons())
       code should equal (expected)
     }
@@ -207,7 +190,7 @@ class CodeGenTest extends FreeSpec with Matchers {
       // (Cons "a" (Cons "b" 1))
       var ast = ConsAst(Reference("a"), ConsAst(Reference("b"), Literal(1)))
 
-      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 1), "b" -> (0, 2)))
+      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 1), "b" -> (0, 2)), NameGen())
       code should equal (List(
         Ld(0, 1),
         Ld(0, 2),
@@ -220,7 +203,7 @@ class CodeGenTest extends FreeSpec with Matchers {
     "IsAtom()" in {
       // isAtom(MyList(1, 2))
       var ast = IsAtom(ConsAst(Literal(1), ConsAst(Literal(2), Literal(0))))
-      var code = CodeGen.emitExpr(ast, Map())
+      var code = CodeGen.emitExpr(ast, Map(), NameGen())
       code should equal(List(
         Ldc(1), Ldc(2), Ldc(0), Cons(), Cons(), Atom()
       ))
@@ -229,7 +212,7 @@ class CodeGenTest extends FreeSpec with Matchers {
     "Debug()" in {
       // Debug(a)
       var ast = Debug(Reference("a"))
-      var code = CodeGen.emitExpr(ast, Map("a" -> (1, 0)))
+      var code = CodeGen.emitExpr(ast, Map("a" -> (1, 0)), NameGen())
       code should equal (List(
         Ld(1, 0), Dbug()
       ))
@@ -238,10 +221,44 @@ class CodeGenTest extends FreeSpec with Matchers {
     "UnaryMinus, -x" in {
       // -(1 + 2)
       var ast = UnaryMinus(Plus(Literal(1), Literal(2)))
-      var code = CodeGen.emitExpr(ast, Map())
+      var code = CodeGen.emitExpr(ast, Map(), NameGen())
       code should equal (List(
         Ldc(0), Ldc(1), Ldc(2), Arith("ADD"), Arith("SUB")
       ))
+    }
+
+    "IfExpression" in {
+      /*
+       if 0 == 1 then 2 else 3
+       */
+      var ast = IfExpression(
+        Equals(Literal(0), Literal(1)),
+        List(Statement(Literal(2))),
+        List(Statement(Literal(3))))
+
+      var code = CodeGen.emitExpr(ast, Map(), NameGen())
+      code should equal (List(
+        Label("if1"), Ldc(0), Ldc(1), Comp("CEQ"), SelTL("true2", "false3"),
+        Label("true2"), Ldc(2), Ldc(0), Ldc(0), Comp("CEQ"),
+        SelTL("after4", "terminate"), Label("false3"),
+        Ldc(3), Label("after4")))
+    }
+
+    "IfExpression2" in {
+      /*
+       var a = if 0 == 1 then 3 else 4
+       */
+      var ast = Assign("a", IfExpression(
+        Equals(Literal(0), Literal(1)),
+        List(Statement(Literal(3))),
+        List(Statement(Literal(4)))
+      ))
+      var code = CodeGen.emitCode(ast, Map("a" -> (0, 1)), NameGen())
+      code should equal (List(
+        Label("if1"), Ldc(0), Ldc(1), Comp("CEQ"), SelTL("true2", "false3"),
+        Label("true2"), Ldc(3), Ldc(0), Ldc(0), Comp("CEQ"),
+        SelTL("after4", "terminate"), Label("false3"),
+        Ldc(4), Label("after4"), St(0, 1)))
     }
   }
 }

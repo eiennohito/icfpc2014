@@ -10,13 +10,9 @@ class SimpleMacroTest extends FreeSpec with Matchers {
   "macro ast transformer" - {
     "func3 should have rewritten AST" in {
       val ast = Something.cleanAsts.get("func3")
-
       val requred = FunctionDefiniton("func3", Nil, List(
-        Return(
-          Plus(Literal(1), Literal(4))
-        )
+        Return(Literal(5))
       ))
-
       ast should not be (None)
       ast.get should be (requred)
     }
@@ -28,10 +24,9 @@ class SimpleMacroTest extends FreeSpec with Matchers {
       val expected = FunctionDefiniton("func8",List(),
         List(
           Assign("x",ConsAst(Literal(1),ConsAst(Literal(2),Literal(3)))),
-          Assign("a",CarAst(Reference("x"))),
-          Assign("b",CdrAst(CdrAst(Reference("x")))),
-          Return(Plus(Reference("a"),Reference("b")))))
-
+          Assign("a",CarAst(Reference("x","scala.Tuple3"))),
+          Assign("b",CdrAst(CdrAst(CdrAst(Reference("x","scala.Tuple3"))))),
+          Return(Plus(Reference("a","scala.Int"),Reference("b","scala.Int")))))
       data.get should be (expected)
     }
 
@@ -42,8 +37,8 @@ class SimpleMacroTest extends FreeSpec with Matchers {
       val expected = FunctionDefiniton("func9",List(),
         List(
           Assign("list",ConsAst(Literal(1),ConsAst(Literal(2),Literal(0)))),
-          Assign("a",CarAst(Reference("list"))),
-          Assign("b",CarAst(CdrAst(Reference("list")))),
+          Assign("a",CarAst(Reference("list", "jp.ac.kyotou.kansai.MyCons"))),
+          Assign("b",CarAst(CdrAst(Reference("list", "jp.ac.kyotou.kansai.MyCons")))),
           Return(Plus(Reference("a"),Reference("b"))))
       )
 
@@ -58,12 +53,12 @@ class SimpleMacroTest extends FreeSpec with Matchers {
       val expected = FunctionDefiniton("lstSum", List("lst"),
         List(
           IfStatement(
-            Equals(CdrAst(Reference("lst")), Literal(0)),
+            Equals(CdrAst(Reference("lst", "jp.ac.kyotou.kansai.MyList")), Literal(0)),
             List(Return(Literal(0))),
             List()),
           Return(Plus(
-            CarAst(Reference("lst")),
-            FunCall("lstSum",List(CdrAst(Reference("lst"))))))))
+            CarAst(Reference("lst", "jp.ac.kyotou.kansai.MyList")),
+            FunCall("lstSum",List(CdrAst(Reference("lst", "jp.ac.kyotou.kansai.MyList"))))))))
       data.get should be (expected)
     }
   }
@@ -72,6 +67,17 @@ class SimpleMacroTest extends FreeSpec with Matchers {
     val data = Something.cleanAsts.get("listTuple")
     data should not be (None)
     data.toString should not contain("MyNil")
+  }
+
+  "highOrderedFns" in {
+    val data = Something.cleanAsts.get("highOrderFn")
+    data should not be (None)
+
+    val expected = FunctionDefiniton("highOrderFn",List("fn"),
+      List(
+        Return(
+          FunCall("fn",List(Literal(2)),true))))
+    data.get should equal(expected)
   }
 
 }

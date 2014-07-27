@@ -6,6 +6,10 @@ package jp.ac.kyotou.kansai
  */
 @gccCode
 class ModFile extends Support {
+  def tplel(i: Int): Int = {
+    return (1, 2)._2
+  }
+
   def mod(a: Int, b: Int): Int = {
     return a - (a / b) * b
   }

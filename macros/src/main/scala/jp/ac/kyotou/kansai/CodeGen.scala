@@ -44,13 +44,13 @@ object CodeGen {
 
   def emitCode(code : StatementAst, vars: Map[String, (Int, Int)], gen: NameGenerator): List[Code] = {
     code match {
-      case Statement(expr) => emitExpr(expr, vars)
+      case Statement(expr) => emitExpr(expr, vars, gen)
       case Block(content) => content.flatMap(x => emitCode(x, vars, gen))
       case Return(expr) => {
-        emitExpr(expr, vars) ++ List(Ret())
+        emitExpr(expr, vars, gen) ++ List(Ret())
       }
       case Assign(name, value) => {
-        emitExpr(value, vars) ++ List(St(vars(name)._1, vars(name)._2))
+        emitExpr(value, vars, gen) ++ List(St(vars(name)._1, vars(name)._2))
       }
       /* case IfExpression(cond, t, f) => {
         var res = Label("if" + gen.get()) :: emitExpr(cond, vars)
@@ -66,7 +66,7 @@ object CodeGen {
         var whileL = "while" + gen.get()
         var bodyL = "while_body" + gen.get()
         var endL = "while_end" + gen.get()
-        var res = Label(whileL) :: emitExpr(cond, vars)
+        var res = Label(whileL) :: emitExpr(cond, vars, gen)
         res ++= List(SelTL(bodyL, endL), Label(bodyL)) ++ body.flatMap(emitCode(_, vars, gen))
         res ++ List(Ldc(0), Ldc(0), Comp("CEQ"), SelTL(whileL, "terminate"), Label(endL))
       }
@@ -75,25 +75,25 @@ object CodeGen {
   }
 
   private def emitBinaryOp(op: Code, lhs: ExprAst, rhs: ExprAst,
-    vars: Map[String, (Int, Int)]): List[Code] = {
-    emitExpr(lhs, vars) ++ emitExpr(rhs, vars) ++ List(op)
+    vars: Map[String, (Int, Int)], gen: NameGenerator): List[Code] = {
+    emitExpr(lhs, vars, gen) ++ emitExpr(rhs, vars, gen) ++ List(op)
   }
 
-  def emitExpr(exp : ExprAst, vars: Map[String, (Int, Int)]): List[Code] = {
+  def emitExpr(exp : ExprAst, vars: Map[String, (Int, Int)], gen: NameGenerator): List[Code] = {
     exp match {
       case Literal(v) => List(Ldc(v))
       case FunCall(name, args, isLocal) => {
-        var res = args.flatMap(emitExpr(_, vars))
+        var res = args.flatMap(emitExpr(_, vars, gen))
         if (isLocal) {
           res ++ List(Ld(vars(name)._1, vars(name)._2), App(args.length))
         } else {
           res ++ List(LoadFL("func_" + name), App(args.length))
         }
       }
-      case Plus(l, r) => emitBinaryOp(Arith("ADD"), l, r, vars)
-      case Minus(l, r) => emitBinaryOp(Arith("SUB"), l, r, vars)
-      case Multiply(l, r) => emitBinaryOp(Arith("MUL"), l, r, vars)
-      case Divide(l, r) => emitBinaryOp(Arith("DIV"), l, r, vars)
+      case Plus(l, r) => emitBinaryOp(Arith("ADD"), l, r, vars, gen)
+      case Minus(l, r) => emitBinaryOp(Arith("SUB"), l, r, vars, gen)
+      case Multiply(l, r) => emitBinaryOp(Arith("MUL"), l, r, vars, gen)
+      case Divide(l, r) => emitBinaryOp(Arith("DIV"), l, r, vars, gen)
       case Reference(name, _) => {
         if (vars.get(name) == None) {
           // Reference to function
@@ -103,21 +103,21 @@ object CodeGen {
           List(Ld(vars(name)._1, vars(name)._2))
         }
       }
-      case ConsAst(l, r) => emitBinaryOp(Cons(), l, r, vars)
-      case CarAst(t) => emitExpr(t, vars) ++ List(Car())
-      case CdrAst(t) => emitExpr(t, vars) ++ List(Cdr())
-      case IsAtom(t) => emitExpr(t, vars) ++ List(Atom())
-      case Debug(t) => emitExpr(t, vars) ++ List(Dbug())
-      case Equals(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CEQ"))
-      case Greater(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CGT"))
-      case GreaterEquals(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CGTE"))
+      case ConsAst(l, r) => emitBinaryOp(Cons(), l, r, vars, gen)
+      case CarAst(t) => emitExpr(t, vars, gen) ++ List(Car())
+      case CdrAst(t) => emitExpr(t, vars, gen) ++ List(Cdr())
+      case IsAtom(t) => emitExpr(t, vars, gen) ++ List(Atom())
+      case Debug(t) => emitExpr(t, vars, gen) ++ List(Dbug())
+      case Equals(l, r) => emitBinaryOp(Comp("CEQ"), l, r, vars, gen)
+      case Greater(l, r) => emitBinaryOp(Comp("CGT"), l, r, vars, gen)
+      case GreaterEquals(l, r) => emitBinaryOp(Comp("CGTE"), l, r, vars, gen)
       // !!!
-      case Lesser(l, r) => emitExpr(Greater(r, l), vars)
-      case LesserEquals(l, r) => emitExpr(GreaterEquals(r, l), vars)
-      case UnaryNot(exp) => Ldc(1) :: emitExpr(exp, vars) ++ List(Arith("SUB"))
-      case UnaryMinus(exp) => Ldc(0) :: emitExpr(exp, vars) ++ List(Arith("SUB"))
+      case Lesser(l, r) => emitExpr(Greater(r, l), vars, gen)
+      case LesserEquals(l, r) => emitExpr(GreaterEquals(r, l), vars, gen)
+      case UnaryNot(exp) => Ldc(1) :: emitExpr(exp, vars, gen) ++ List(Arith("SUB"))
+      case UnaryMinus(exp) => Ldc(0) :: emitExpr(exp, vars, gen) ++ List(Arith("SUB"))
       case Tuple(constrs) => {
-        var res = constrs.flatMap(emitExpr(_, vars))
+        var res = constrs.flatMap(emitExpr(_, vars, gen))
         for (i <- 0 until constrs.length - 1) res ++= List(Cons())
         res
       }

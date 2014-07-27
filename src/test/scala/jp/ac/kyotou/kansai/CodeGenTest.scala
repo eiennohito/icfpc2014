@@ -189,7 +189,7 @@ class CodeGenTest extends FreeSpec with Matchers {
       var ast = FunCall("mod",
         List(Plus(Literal(1), Reference("a")), Minus(Reference("b"), Literal(3))))
 
-      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 0), "b" -> (0, 1)))
+      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 0), "b" -> (0, 1)), NameGen())
       code should equal (List(
         Ldc(1), Ld(0, 0), Arith("ADD"),
         Ld(0, 1), Ldc(3), Arith("SUB"),
@@ -198,7 +198,7 @@ class CodeGenTest extends FreeSpec with Matchers {
 
     "Tuple" in {
       var ast = Tuple(List(Literal(1), Literal(2), Literal(3)))
-      var code = CodeGen.emitExpr(ast, Map())
+      var code = CodeGen.emitExpr(ast, Map(), NameGen())
       var expected = List(Ldc(1), Ldc(2), Ldc(3), Cons(), Cons())
       code should equal (expected)
     }
@@ -207,7 +207,7 @@ class CodeGenTest extends FreeSpec with Matchers {
       // (Cons "a" (Cons "b" 1))
       var ast = ConsAst(Reference("a"), ConsAst(Reference("b"), Literal(1)))
 
-      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 1), "b" -> (0, 2)))
+      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 1), "b" -> (0, 2)), NameGen())
       code should equal (List(
         Ld(0, 1),
         Ld(0, 2),
@@ -220,7 +220,7 @@ class CodeGenTest extends FreeSpec with Matchers {
     "IsAtom()" in {
       // isAtom(MyList(1, 2))
       var ast = IsAtom(ConsAst(Literal(1), ConsAst(Literal(2), Literal(0))))
-      var code = CodeGen.emitExpr(ast, Map())
+      var code = CodeGen.emitExpr(ast, Map(), NameGen())
       code should equal(List(
         Ldc(1), Ldc(2), Ldc(0), Cons(), Cons(), Atom()
       ))
@@ -229,7 +229,7 @@ class CodeGenTest extends FreeSpec with Matchers {
     "Debug()" in {
       // Debug(a)
       var ast = Debug(Reference("a"))
-      var code = CodeGen.emitExpr(ast, Map("a" -> (1, 0)))
+      var code = CodeGen.emitExpr(ast, Map("a" -> (1, 0)), NameGen())
       code should equal (List(
         Ld(1, 0), Dbug()
       ))
@@ -238,7 +238,7 @@ class CodeGenTest extends FreeSpec with Matchers {
     "UnaryMinus, -x" in {
       // -(1 + 2)
       var ast = UnaryMinus(Plus(Literal(1), Literal(2)))
-      var code = CodeGen.emitExpr(ast, Map())
+      var code = CodeGen.emitExpr(ast, Map(), NameGen())
       code should equal (List(
         Ldc(0), Ldc(1), Ldc(2), Arith("ADD"), Arith("SUB")
       ))

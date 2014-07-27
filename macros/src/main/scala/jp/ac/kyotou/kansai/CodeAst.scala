@@ -76,5 +76,8 @@ case class Cons() extends Code
 case class Car() extends Code
 case class Cdr() extends Code
 
+// Primitive operators
+case class Atom() extends Code
+
 // Label
 case class Label(name: String) extends Code

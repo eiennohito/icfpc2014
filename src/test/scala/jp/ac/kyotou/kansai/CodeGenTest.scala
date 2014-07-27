@@ -34,9 +34,7 @@ class CodeGenTest extends FreeSpec with Matchers {
        }
        */
       var ast = FunctionDefiniton("f", List[String](), List(Assign("x", Literal(1))))
-
       var code = CodeGen.emitStructure(ast, NameGen())
-      println(code.map(CodeGen.show).mkString("\n"))
     }
 
     "mod" in {

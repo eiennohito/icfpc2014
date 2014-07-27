@@ -27,6 +27,7 @@ object Linker {
       case FunctionDefiniton(_, args, body) => {
         body.flatMap(collectDependsStmt(_, asts)).diff(args ++ CodeGen.collectLocalVars(body, args))
       }
+      case _ => sys.error("Unknown structure: $(_)")
     }
   }
 
@@ -80,6 +81,7 @@ object Linker {
         var depends = collectDependsExp(cond, asts)
         depends ++ t.flatMap(collectDependsStmt(_, asts)) ++ f.flatMap(collectDependsStmt(_, asts))
       }
+      case _ => sys.error("Unknown expression: $(_)")
     }
   }
 }

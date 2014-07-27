@@ -25,7 +25,7 @@ class SimpleMacroTest extends FreeSpec with Matchers {
         List(
           Assign("x",ConsAst(Literal(1),ConsAst(Literal(2),Literal(3)))),
           Assign("a",CarAst(Reference("x","scala.Tuple3"))),
-          Assign("b",CdrAst(CdrAst(CdrAst(Reference("x","scala.Tuple3"))))),
+          Assign("b",CdrAst(CdrAst(Reference("x","scala.Tuple3")))),
           Return(Plus(Reference("a","scala.Int"),Reference("b","scala.Int")))))
       data.get should be (expected)
     }
@@ -117,6 +117,18 @@ class SimpleMacroTest extends FreeSpec with Matchers {
         Assign("x",Literal(5)),
         Statement(Debug(Reference("x"))),
         Return(Reference("x"))))
+
+    data.get should be (expected)
+  }
+
+  "lean syntax functions generate correct AST" in {
+    val data = Something.cleanAsts.get("leanSyntax")
+    data should not be (None)
+    println(data)
+
+    val expected = FunctionDefiniton("leanSyntax",List("i", "j"),
+      List(
+        Return(CdrAst(ConsAst(Reference("i"),Reference("j"))))))
 
     data.get should be (expected)
   }

@@ -143,6 +143,7 @@ class gccCodeMacroImpl(val c: Context) {
       case q"${nm: TermName} = $expr" => ast.Assign(nm.encodedName.toString, transformExprTree(expr))
       case expr @ q"$left.$func[..$tpe](..$args)" => ast.Statement(transformExprTree(expr))
       case expr @ q"$func[..$tpe](..$args)" => ast.Statement(transformExprTree(expr))
+      case expr @ q"$left.$right" => ast.Statement(transformExprTree(expr))
       case q"return $expr" => ast.Return(transformExprTree(expr))
       case q"if ($cond) $thenp else $elsep" => ast.Statement(ast.IfExpression(
         transformExprTree(cond),
@@ -152,7 +153,6 @@ class gccCodeMacroImpl(val c: Context) {
       case q"while ($cond) $body" => ast.WhileStatement(
         transformExprTree(cond), transformBody(body)
       )
-      case q"{}" => ast.Block(Nil)
       case x => throw new MacroException(s"unsupported Scala statement: $x")
     }
   }

@@ -17,7 +17,9 @@ object AstCleanup {
     asts.map {
       case (k, v) =>
         k -> (v match {
-          case FunctionDefiniton(name, args, code) => FunctionDefiniton(name, args, rewriteCode(code))
+          case FunctionDefiniton(name, args, code) =>
+            val withReturns = addReturn(code)
+            FunctionDefiniton(name, args, rewriteStatements(withReturns))
         })
     }
   }
@@ -28,7 +30,7 @@ object AstCleanup {
 
   def selectTupleElementLen(ast: ExprAst, num: Int, len: Int) = {
     if (len == num) {
-      selectTupleElement(ast, num)
+      selectTupleElement(ast, num - 1)
     } else {
       CarAst(selectTupleElement(ast, num - 1))
     }
@@ -138,7 +140,7 @@ object AstCleanup {
       case x: Application =>
         throw new RuntimeException(s"invalid application $x")
 
-      case IfExpression(cond, tb, fb) => IfExpression(rewriteExpression(cond), rewriteCode(tb), rewriteCode(fb))
+      case IfExpression(cond, tb, fb) => IfExpression(rewriteExpression(cond), rewriteStatements(tb), rewriteStatements(fb))
       case FunCall("tupleLast", arg :: Literal(x) :: Nil, _) => CdrAst(selectTupleElement(rewriteExpression(arg), x - 2))
       case FunCall("MyCons", arg1 :: arg2 :: Nil, _) => ConsAst(rewriteExpression(arg1), rewriteExpression(arg2))
       case FunCall(nm, args, _) => FunCall(nm, args.map(rewriteExpression))
@@ -148,13 +150,29 @@ object AstCleanup {
     }
   }
 
-  def rewriteCode(code: List[StatementAst]): List[StatementAst] = {
+  /**
+   * Rewrite asts to have last statement to be returing one
+   * @param asts they will be rewritten
+   * @return
+   */
+  def addReturn(asts: List[StatementAst]): List[StatementAst] = {
+    val len = asts.length
+    val last = asts.last
+    val rest = asts.take(len - 1)
+    last match {
+      case Statement(x) => rest ++ List(Return(x))
+      case Block(x) => rest ++ addReturn(x)
+      case _ => asts
+    }
+  }
+
+  def rewriteStatements(code: List[StatementAst]): List[StatementAst] = {
     code.map {
       case Assign(name, result) => Assign(name, rewriteExpression(result))
       case Statement(expr) => Statement(rewriteExpression(expr))
       case Return(expr) => Return(rewriteExpression(expr))
-      case Block(expr) => Block(rewriteCode(expr))
-      case WhileStatement(cond, bdy) => WhileStatement(rewriteExpression(cond), rewriteCode(bdy))
+      case Block(expr) => Block(rewriteStatements(expr))
+      case WhileStatement(cond, bdy) => WhileStatement(rewriteExpression(cond), rewriteStatements(bdy))
     }
   }
 }

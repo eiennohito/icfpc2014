@@ -8,6 +8,11 @@ import org.scalatest.{Matchers, FreeSpec}
  */
 class SimpleMacroTest extends FreeSpec with Matchers {
   "macro ast transformer" - {
+
+    "test should not contain forbidden asts" in {
+      ForbiddenAsts.check(Something.cleanAsts) should be (empty)
+    }
+
     "func3 should have rewritten AST" in {
       val ast = Something.cleanAsts.get("func3")
       val requred = FunctionDefiniton("func3", Nil, List(
@@ -124,7 +129,6 @@ class SimpleMacroTest extends FreeSpec with Matchers {
   "lean syntax functions generate correct AST" in {
     val data = Something.cleanAsts.get("leanSyntax")
     data should not be (None)
-    println(data)
 
     val expected = FunctionDefiniton("leanSyntax",List("i", "j"),
       List(

@@ -83,12 +83,11 @@ class gccCodeMacroImpl(val c: Context) {
     case ast.Literal(i) => q"jp.ac.kyotou.kansai.Literal($i)"
     case ast.FunCall(name, args, tx) => q"jp.ac.kyotou.kansai.FunCall($name, $args, $tx)"
     case ast.Reference(name, tpe) => q"jp.ac.kyotou.kansai.Reference($name, $tpe)"
-    case ast.Application(funcName, context, args, tpe) => q"jp.ac.kyotou.kansai.Application($funcName, $context, $args, $tpe)"
+    case ast.ApplicationAst(funcName, context, args, tpe) => q"jp.ac.kyotou.kansai.ApplicationAst($funcName, $context, $args, $tpe)"
     case ast.ConsAst(left, right) => q"jp.ac.kyotou.kansai.ConsAst(${liftExpr(left)}, ${liftExpr(right)})"
     case ast.CarAst(target) => q"jp.ac.kyotou.kansai.CarAst(${liftExpr(target)})"
     case ast.CdrAst(target) => q"jp.ac.kyotou.kansai.CdrAst(${liftExpr(target)})"
-    case ast.Tuple(constrs) => q"jp.ac.kyotou.kansai.Tuple(${constrs.map(x => liftExpr(x))})"
-    case ast.ThisRef(name) => q"jp.ac.kyotou.kansai.ThisRef($name)"
+    case ast.ThisRefAst(name) => q"jp.ac.kyotou.kansai.ThisRefAst($name)"
     case ast.IfExpression(cond, tb, fb) =>
       q"jp.ac.kyotou.kansai.IfExpression($cond, $tb, $fb)"
     case _ => throw new MacroException(s"unsupported expr ast for conversion $x")
@@ -110,7 +109,7 @@ class gccCodeMacroImpl(val c: Context) {
 
   def transformExprTree(tree: Tree): ExprAst = {
     tree match {
-      case q"$left.$func[..$tpe](..$args)" => ast.Application(func.encodedName.toString,
+      case q"$left.$func[..$tpe](..$args)" => ast.ApplicationAst(func.encodedName.toString,
         transformExprTree(left),
         args.collect {
           case x: Tree => transformExprTree(x)
@@ -118,11 +117,11 @@ class gccCodeMacroImpl(val c: Context) {
         },
         left.tpe.typeSymbol.fullName
       )
-      case q"$x.this" => ast.ThisRef(x.encodedName.toString)
+      case q"$x.this" => ast.ThisRefAst(x.encodedName.toString)
       case q"${lit: Int}" => ast.Literal(lit)
       case q"${lit: Boolean}" => ast.Literal(if (lit) 1 else 0)
       case q"${ref: TermName}" => ast.Reference(ref.decodedName.toString, tree.tpe.typeSymbol.fullName)
-      case q"$cont.$value" => ast.Application(value.encodedName.toString, transformExprTree(cont), Nil, cont.tpe.typeSymbol.fullName)
+      case q"$cont.$value" => ast.ApplicationAst(value.encodedName.toString, transformExprTree(cont), Nil, cont.tpe.typeSymbol.fullName)
       case q"{ (..$inargs) => $left.$call(..$outargs) }" if checkArgs(inargs, outargs) =>
         ast.Reference(call.encodedName.toString, tree.tpe.typeSymbol.fullName)
       case q"if ($cond) $thenp else $elsep" => ast.IfExpression(

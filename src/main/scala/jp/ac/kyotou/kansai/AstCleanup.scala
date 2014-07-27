@@ -76,18 +76,18 @@ object AstCleanup {
   def rewriteExpression(expr: ExprAst): ExprAst = {
     expr match {
 
-      case Application("isInt", ThisRef(_), arg :: Nil, _) =>
+      case ApplicationAst("isInt", ThisRefAst(_), arg :: Nil, _) =>
         IsAtom(rewriteExpression(arg))
 
-      case Application("debug", ThisRef(_), arg :: Nil, _) =>
+      case ApplicationAst("debug", ThisRefAst(_), arg :: Nil, _) =>
         Debug(rewriteExpression(arg))
 
-      case Application(func, ThisRef(_), args, _) =>  FunCall(func, args.map(rewriteExpression))
+      case ApplicationAst(func, ThisRefAst(_), args, _) =>  FunCall(func, args.map(rewriteExpression))
 
-      case Application("at", ctx, Literal(i) :: Nil, "jp.ac.kyotou.kansai.MyList") =>
+      case ApplicationAst("at", ctx, Literal(i) :: Nil, "jp.ac.kyotou.kansai.MyList") =>
         CarAst(selectTupleElement(rewriteExpression(ctx), i))
 
-      case Application(nm @ ("$eq$eq" | "$bang$eq"), ctx, arg :: Nil, tpe) if listTypes.contains(tpe) =>
+      case ApplicationAst(nm @ ("$eq$eq" | "$bang$eq"), ctx, arg :: Nil, tpe) if listTypes.contains(tpe) =>
         val res = (ctx, arg) match {
           case (Reference("MyNil", _), x) => IsAtom(rewriteExpression(x))
           case (x, Reference("MyNil", _)) => IsAtom(rewriteExpression(x))
@@ -95,7 +95,7 @@ object AstCleanup {
         }
         if (nm == "$bang$eq") UnaryNot(res) else res
 
-      case Application(name, ctx, arg :: Nil, tpe)  if atomTypes.contains(tpe) =>
+      case ApplicationAst(name, ctx, arg :: Nil, tpe)  if atomTypes.contains(tpe) =>
         val left = rewriteExpression(ctx)
         val right = rewriteExpression(arg)
         name match {
@@ -112,19 +112,19 @@ object AstCleanup {
           case x => throw new RewriteException(s"unsupported prefixed expression $x")
         }
 
-      case Application("apply", Application(tupleName(XInt(v)), _, _, _), args, _) =>
+      case ApplicationAst("apply", ApplicationAst(tupleName(XInt(v)), _, _, _), args, _) =>
         makeTuple(args.map(rewriteExpression))
 
-      case Application("apply", Reference("MyCons", _), left :: right :: Nil, _) =>
+      case ApplicationAst("apply", Reference("MyCons", _), left :: right :: Nil, _) =>
         ConsAst(rewriteExpression(left), rewriteExpression(right))
 
-      case Application("apply", Reference(name, _), args, functionName(XInt(a))) =>
+      case ApplicationAst("apply", Reference(name, _), args, functionName(XInt(a))) =>
         FunCall(name, args.map(rewriteExpression), fromVariable = true)
 
-      case Application("apply", Reference("MyList", _), args, _) =>
+      case ApplicationAst("apply", Reference("MyList", _), args, _) =>
         if (args.isEmpty) throw new RewriteException("Can't create empty list") else makeList(args)
 
-      case Application(name, ctx, Nil, ctxtype) =>
+      case ApplicationAst(name, ctx, Nil, ctxtype) =>
         val inner = rewriteExpression(ctx)
         name match {
           case "unary_$bang" => UnaryNot(inner)
@@ -137,7 +137,7 @@ object AstCleanup {
         }
 
 
-      case x: Application =>
+      case x: ApplicationAst =>
         throw new RuntimeException(s"invalid application $x")
 
       case IfExpression(cond, tb, fb) => IfExpression(rewriteExpression(cond), rewriteStatements(tb), rewriteStatements(fb))

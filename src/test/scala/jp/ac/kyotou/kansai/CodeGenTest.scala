@@ -179,12 +179,6 @@ class CodeGenTest extends FreeSpec with Matchers {
         LoadFL("func_mod"), App(2)))
     }
 
-    "Tuple" in {
-      var ast = Tuple(List(Literal(1), Literal(2), Literal(3)))
-      var code = CodeGen.emitExpr(ast, Map(), NameGen())
-      var expected = List(Ldc(1), Ldc(2), Ldc(3), Cons(), Cons())
-      code should equal (expected)
-    }
 
     "List" in {
       // (Cons "a" (Cons "b" 1))

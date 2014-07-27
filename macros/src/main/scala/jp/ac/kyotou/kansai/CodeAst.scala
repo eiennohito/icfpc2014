@@ -45,9 +45,28 @@ case class Debug(expr: ExprAst) extends ExprAst
 case class IfExpression(condition: ExprAst, trueBranch: List[StatementAst], falseBranch: List[StatementAst]) extends ExprAst
 
 //won't appear in the output
-case class Application(funcName: String, context: ExprAst, args: List[ExprAst], ctxType: String) extends ExprAst
-case class Tuple(constructors: List[ExprAst]) extends ExprAst
-case class ThisRef(name: String) extends ExprAst
+case class ApplicationAst(funcName: String, context: ExprAst, args: List[ExprAst], ctxType: String) extends ExprAst
+case class ThisRefAst(name: String) extends ExprAst
+
+object ForbiddenAsts {
+  val forbidden = Set(
+    "ApplicationAst",
+    "ThisRefAst"
+  )
+
+  def check(candadates: TraversableOnce[StructureAst]): List[StructureAst] = {
+    candadates.filter {
+      case x: FunctionDefiniton =>
+        val string = x.toString
+        forbidden.forall(y => string.contains(y))
+      case _ => false
+    }.toList
+  }
+
+  def check(map: Map[String, StructureAst]): List[StructureAst] = {
+    check(map.view.map(_._2))
+  }
+}
 
 // GCC instructions
 sealed trait Code

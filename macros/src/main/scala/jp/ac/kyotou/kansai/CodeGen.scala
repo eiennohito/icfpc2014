@@ -106,11 +106,6 @@ object CodeGen {
       case LesserEquals(l, r) => emitExpr(GreaterEquals(r, l), vars, gen)
       case UnaryNot(exp) => Ldc(1) :: emitExpr(exp, vars, gen) ++ List(Arith("SUB"))
       case UnaryMinus(exp) => Ldc(0) :: emitExpr(exp, vars, gen) ++ List(Arith("SUB"))
-      case Tuple(constrs) => {
-        var res = constrs.flatMap(emitExpr(_, vars, gen))
-        for (i <- 0 until constrs.length - 1) res ++= List(Cons())
-        res
-      }
       case IfExpression(cond, t, f) => {
         var res = Label("if" + gen.get()) :: emitExpr(cond, vars, gen)
         var trueL = "true" + gen.get()

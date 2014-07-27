@@ -118,23 +118,7 @@ class CodeGenTest extends FreeSpec with Matchers {
     }
   }
 
-  "list operators" - {
-    "cons" in {
-      // (Cons "a" (Cons "b" 1))
-      var ast = ConsAst(Reference("a"), ConsAst(Reference("b"), Literal(1)))
-
-      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 1), "b" -> (0, 2)))
-      code should equal (List(
-        Ld(0, 1),
-        Ld(0, 2),
-        Ldc(1),
-        Cons(),
-        Cons()
-      ))
-    }
-  }
-
-  "name generator" - {
+  "NameGenerator" - {
     "yields a fresh name" in {
       var gen = NameGen()
       var name1 = gen.get()
@@ -143,8 +127,8 @@ class CodeGenTest extends FreeSpec with Matchers {
     }
   }
 
-  "if statement" - {
-    "whatwver" in {
+  "emitCode" - {
+    "IfStatement" in {
       /*
        if 0 == 1 then 2 else 3
        */
@@ -162,8 +146,8 @@ class CodeGenTest extends FreeSpec with Matchers {
     }
   }
 
-  "function call" - {
-    "whatwver" in {
+  "emitExpr" - {
+    "FunCall" in {
       var ast = FunCall("mod",
         List(Plus(Literal(1), Reference("a")), Minus(Reference("b"), Literal(3))))
 
@@ -173,14 +157,26 @@ class CodeGenTest extends FreeSpec with Matchers {
         Ld(0, 1), Ldc(3), Arith("SUB"),
         LoadFL("func_mod"), App(2)))
     }
-  }
 
-  "tuple" - {
-    "whatever" in {
+    "Tuple" in {
       var ast = Tuple(List(Literal(1), Literal(2), Literal(3)))
       var code = CodeGen.emitExpr(ast, Map())
       var expected = List(Ldc(1), Ldc(2), Ldc(3), Cons(), Cons())
       code should equal (expected)
+    }
+
+    "List" in {
+      // (Cons "a" (Cons "b" 1))
+      var ast = ConsAst(Reference("a"), ConsAst(Reference("b"), Literal(1)))
+
+      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 1), "b" -> (0, 2)))
+      code should equal (List(
+        Ld(0, 1),
+        Ld(0, 2),
+        Ldc(1),
+        Cons(),
+        Cons()
+      ))
     }
   }
 }

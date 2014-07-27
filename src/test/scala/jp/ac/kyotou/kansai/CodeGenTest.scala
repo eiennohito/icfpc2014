@@ -217,12 +217,21 @@ class CodeGenTest extends FreeSpec with Matchers {
       ))
     }
 
-    "IsAtom(h" in {
+    "IsAtom()" in {
       // isAtom(MyList(1, 2))
       var ast = IsAtom(ConsAst(Literal(1), ConsAst(Literal(2), Literal(0))))
       var code = CodeGen.emitExpr(ast, Map())
       code should equal(List(
         Ldc(1), Ldc(2), Ldc(0), Cons(), Cons(), Atom()
+      ))
+    }
+
+    "Debug()" in {
+      // Debug(a)
+      var ast = Debug(Reference("a"))
+      var code = CodeGen.emitExpr(ast, Map("a" -> (1, 0)))
+      code should equal (List(
+        Ld(1, 0), Dbug()
       ))
     }
   }

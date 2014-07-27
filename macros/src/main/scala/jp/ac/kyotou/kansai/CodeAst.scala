@@ -79,6 +79,7 @@ case class Cdr() extends Code
 
 // Primitive operators
 case class Atom() extends Code
+case class Dbug() extends Code
 
 // Label
 case class Label(name: String) extends Code

@@ -107,6 +107,8 @@ class Rewriter(classes: Map[String, CaseClassDefinition]) {
           case "$less" => Lesser(left, right)
           case "$less$eq" => LesserEquals(left, right)
           case "$bang$eq" => UnaryNot(Equals(left, right))
+          case "$amp$amp" => Multiply(left, right)
+          case "$bar$bar" => Plus(left, right)
           case x => throw new RewriteException(s"unsupported prefixed expression $x")
         }
 

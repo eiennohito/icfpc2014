@@ -128,23 +128,6 @@ class CodeGenTest extends FreeSpec with Matchers {
   }
 
   "emitCode" - {
-    /* "IfStatement" in {
-      /*
-       if 0 == 1 then 2 else 3
-       */
-      var ast = IfExpression(
-        Equals(Literal(0), Literal(1)),
-        List(Statement(Literal(2))),
-        List(Statement(Literal(3))))
-
-      var code = CodeGen.emitCode(ast, Map(), NameGen())
-      code should equal (List(
-        Label("if1"), Ldc(0), Ldc(1), Comp("CEQ"), SelTL("true2", "false3"),
-        Label("true2"), Ldc(2), Ldc(0), Ldc(0), Comp("CEQ"),
-        SelTL("after4", "terminate"), Label("false3"),
-        Ldc(3), Label("after4")))
-    }*/
-
     "Assign" in {
       /*
        var a = 1 + 2
@@ -242,6 +225,23 @@ class CodeGenTest extends FreeSpec with Matchers {
       code should equal (List(
         Ldc(0), Ldc(1), Ldc(2), Arith("ADD"), Arith("SUB")
       ))
+    }
+
+    "IfExpression" in {
+      /*
+       if 0 == 1 then 2 else 3
+       */
+      var ast = IfExpression(
+        Equals(Literal(0), Literal(1)),
+        List(Statement(Literal(2))),
+        List(Statement(Literal(3))))
+
+      var code = CodeGen.emitExpr(ast, Map(), NameGen())
+      code should equal (List(
+        Label("if1"), Ldc(0), Ldc(1), Comp("CEQ"), SelTL("true2", "false3"),
+        Label("true2"), Ldc(2), Ldc(0), Ldc(0), Comp("CEQ"),
+        SelTL("after4", "terminate"), Label("false3"),
+        Ldc(3), Label("after4")))
     }
   }
 }

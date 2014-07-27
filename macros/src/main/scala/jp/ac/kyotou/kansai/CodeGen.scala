@@ -52,16 +52,6 @@ object CodeGen {
       case Assign(name, value) => {
         emitExpr(value, vars, gen) ++ List(St(vars(name)._1, vars(name)._2))
       }
-      /* case IfExpression(cond, t, f) => {
-        var res = Label("if" + gen.get()) :: emitExpr(cond, vars)
-        var trueL = "true" + gen.get()
-        var falseL = "false" + gen.get()
-        var afterL = "after" + gen.get()
-        res ++= List(SelTL(trueL, falseL))
-        res ++= Label(trueL) :: t.flatMap(emitCode(_, vars, gen))
-        res ++= List(Ldc(0), Ldc(0), Comp("CEQ"), SelTL(afterL, "terminate"))
-        res ++ (Label(falseL) :: f.flatMap(emitCode(_, vars, gen))) ++ List(Label(afterL))
-      } */
       case WhileStatement(cond, body) => {
         var whileL = "while" + gen.get()
         var bodyL = "while_body" + gen.get()
@@ -120,6 +110,16 @@ object CodeGen {
         var res = constrs.flatMap(emitExpr(_, vars, gen))
         for (i <- 0 until constrs.length - 1) res ++= List(Cons())
         res
+      }
+      case IfExpression(cond, t, f) => {
+        var res = Label("if" + gen.get()) :: emitExpr(cond, vars, gen)
+        var trueL = "true" + gen.get()
+        var falseL = "false" + gen.get()
+        var afterL = "after" + gen.get()
+        res ++= List(SelTL(trueL, falseL))
+        res ++= Label(trueL) :: t.flatMap(emitCode(_, vars, gen))
+        res ++= List(Ldc(0), Ldc(0), Comp("CEQ"), SelTL(afterL, "terminate"))
+        res ++ (Label(falseL) :: f.flatMap(emitCode(_, vars, gen))) ++ List(Label(afterL))
       }
       case _ => sys.error("Not implemented : ExprAst")
     }

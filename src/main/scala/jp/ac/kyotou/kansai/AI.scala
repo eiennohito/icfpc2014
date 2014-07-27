@@ -35,10 +35,10 @@ object AI extends AstCleanup {
 
   def main(args: Array[String]) {
     var gen = NameGen()
-	var codeList = CodeGen.emitStructure(cleanAsts.get("entryPoint").get, NameGen())
-       codeList ++= CodeGen.emitStructure(cleanAsts.get("step").get, NameGen())
-       codeList ++= CodeGen.emitStructure(cleanAsts.get("mod").get, NameGen())
-       codeList ++= CodeGen.emitStructure(cleanAsts.get("random").get, NameGen())
+	var codeList = CodeGen.emitStructure(cleanAsts.get("entryPoint").get, gen)
+       codeList ++= CodeGen.emitStructure(cleanAsts.get("step").get, gen)
+       codeList ++= CodeGen.emitStructure(cleanAsts.get("mod").get, gen)
+       codeList ++= CodeGen.emitStructure(cleanAsts.get("random").get, gen)
        codeList ++= List(Label("terminate"))
     println(codeList.map(CodeGen.show).mkString("", "\n", ""))
     println("-----")

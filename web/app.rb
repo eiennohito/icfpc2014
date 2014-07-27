@@ -45,7 +45,7 @@ object AI extends AstCleanup {
   result = `cd ../; sbt run`
 
   if result.include?("error") then
-    result = [result, ""]
+    result = [result.gsub("[0m", "").gsub("[31m", ""), ""]
   else
     result = result.split("<<<<<<<<<<")[1].split(">>>>>>>>>>")[0].split("----------")
   end

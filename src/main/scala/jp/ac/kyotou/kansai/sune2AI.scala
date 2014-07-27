@@ -66,7 +66,29 @@ class sune2AI extends Support {
     return 1 + arraySize2D(lst.cdr)
   }
 
-  def bfs(map : MyList[MyList[Int]], myPos : Point, safeDirection : MyList[Int]) : Int = {
+  def thereIsVisibleGhost(ghosts : MyList[Ghost], y : Int, x : Int) : Boolean = {
+    if (ghosts == MyNil) {
+      return false
+    }
+    var flag = true
+    if (ghosts.car.pos.x != x) {
+      flag = false
+    }
+    if (ghosts.car.pos.y != y) {
+      flag = false
+    }
+    if (flag) {
+      if (ghosts.car.vitality != 2) {
+        return true
+      }
+    }
+    return thereIsVisibleGhost(ghosts.cdr, y, x)
+  }
+
+  def bfs(world : World, safeDirection : MyList[Int]) : Int = {
+    var myPos = world.lambdaMan.pos
+    var myVitality = world.lambdaMan.vitality
+    var map = world.map
     var height = arraySize2D(map)
     var width = arraySize(map.car)
 
@@ -85,8 +107,8 @@ class sune2AI extends Support {
     var dy = MyList(-1,0,1,0)
     var dx = MyList(0,1,0,-1)
 
-    var nearestPillY = -1
-    var nearestPillX = -1
+    var targetY = -1
+    var targetX = -1
 
     var loop = true
     var currentDist = 0
@@ -96,15 +118,30 @@ class sune2AI extends Support {
     var pred = true
     var content = 0
     var firstLoop = true
+    var found = false
+
     while (loop) {
       var y = arrayGet(queueY, qs)
       var x = arrayGet(queueX, qs)
       
       qs = qs + 1
 
-      if (arrayGet2D(map, y, x) == 2) { // pill
-        nearestPillY = y
-        nearestPillX = x
+      if (myVitality == 0) { // standard mode
+        if (arrayGet2D(map, y, x) == 2) { // pill
+          found = true
+        }
+        if (arrayGet2D(map, y, x) == 3) { // power pill
+          found = true
+        }
+      } else { // power pill mode
+        if (arrayGet2D(map, y, x) == 10) { // visible ghost
+          found = true
+        }
+      }
+
+      if (found) {
+        targetY = y
+        targetX = x
         loop = false
       } else {
         currentDist = arrayGet2D(dist, y, x)
@@ -125,7 +162,12 @@ class sune2AI extends Support {
           }
           if (pred) {
             content = arrayGet2D(map, yy, xx)
-            if (content != 0) {
+            pred = true
+            if (content == 0) pred = false // wall
+            if (myVitality == 0) {
+              if (content == 10) pred = false
+            }
+            if (pred) { // not wall
               if (arrayGet2D(dist, yy, xx) == -1) {
                 dist = arraySet2D(dist, yy, xx, currentDist + 1)
                 queueY = arraySet(queueY, qt, yy)
@@ -145,11 +187,11 @@ class sune2AI extends Support {
     }
 
 
-    if (nearestPillY == -1) return 0
+    if (targetY == -1) return 0
     var lastDirection = -1
     var update = true
-    var y = nearestPillY
-    var x = nearestPillX
+    var y = targetY
+    var x = targetX
     var direction = 0
     var reverseDirection = 0
     while(update) {
@@ -213,16 +255,31 @@ class sune2AI extends Support {
     return res
   }
 
+  def addVisibleGhostToMap(ghosts : MyList[Ghost], map : MyList[MyList[Int]]) : MyList[MyList[Int]] = {
+    if (ghosts == MyNil) return map
+    var res = addVisibleGhostToMap(ghosts.cdr, map)
+    var ghost = ghosts.car
+    if (ghost.vitality != 2) {
+      res = arraySet2D(res, ghost.pos.y, ghost.pos.x, 10)
+    }
+    return res
+  }
+
   case class Point(x : Int, y : Int)
   case class Ghost(vitality : Int, pos : Point, direction : Int)
   case class LambdaMan(vitality : Int, pos : Point, rest : Int)
   case class World(map : MyList[MyList[Int]], lambdaMan : LambdaMan, ghosts: MyList[Ghost], rest : Int)
 
-  def step(state : Int, world : World) : (Int, Int) = {
+  def step(state : Int, argWorld : World) : (Int, Int) = {
+    var myMap = addVisibleGhostToMap(argWorld.ghosts, argWorld.map)
+    var world = World(myMap, argWorld.lambdaMan, argWorld.ghosts, 0)
     var pos = world.lambdaMan.pos
-    var safeDirection = getSafeDirection(world.ghosts, pos)
+    var safeDirection = MyList(1,1,1,1)
+    if (world.lambdaMan.vitality == 0) {
+      safeDirection = getSafeDirection(world.ghosts, pos)
+    }
     // debug(safeDirection)
-    var nextDirection = bfs(world.map, pos, safeDirection)
+    var nextDirection = bfs(world, safeDirection)
     // debug(nextDirection)
     return (0, nextDirection)
   }
@@ -237,12 +294,12 @@ class sune2AI extends Support {
       MyList(1,1,0,0),
       MyList(1,1,0,0),
       MyList(0,2,1,0))
-    var lambdaMan = LambdaMan(0, Point(0,0), 0)
+    var lambdaMan = LambdaMan(1, Point(0,0), 0)
     var ghosts = MyList(Ghost(0, Point(0,1), 0))
     var world = World(map, lambdaMan, ghosts, 0)
-    step(0, world)
+    debug(step(0, world))
     return 0
-  }  
+  }
 }
 
 import java.io.PrintWriter

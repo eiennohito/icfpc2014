@@ -78,6 +78,14 @@ class Something extends Support {
     return lst.car + lstSum(lst.cdr)
   }
 
+  def usingIsAtom: Int = {
+    val x = MyList(1, 2)
+    val y = x != MyNil
+    val k = MyNil == x
+    val z = isInt(x)
+    return 0
+  }
+
   def listTuple(x: (MyList[Int], Int)): (MyList[Int], Int) = {
     return (MyCons(5, MyNil), 3)
   }
@@ -89,6 +97,12 @@ class Something extends Support {
   def listSyntSugar: Int = {
     val list = MyList(1, 2, 3)
     val x = list.at(1)
+    return x
+  }
+
+  def debugTest: Int = {
+    val x = 5
+    debug(x)
     return x
   }
 

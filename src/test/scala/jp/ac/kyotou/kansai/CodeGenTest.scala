@@ -118,23 +118,7 @@ class CodeGenTest extends FreeSpec with Matchers {
     }
   }
 
-  "list operators" - {
-    "cons" in {
-      // (Cons "a" (Cons "b" 1))
-      var ast = ConsAst(Reference("a"), ConsAst(Reference("b"), Literal(1)))
-
-      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 1), "b" -> (0, 2)))
-      code should equal (List(
-        Ld(0, 1),
-        Ld(0, 2),
-        Ldc(1),
-        Cons(),
-        Cons()
-      ))
-    }
-  }
-
-  "name generator" - {
+  "NameGenerator" - {
     "yields a fresh name" in {
       var gen = NameGen()
       var name1 = gen.get()
@@ -143,8 +127,8 @@ class CodeGenTest extends FreeSpec with Matchers {
     }
   }
 
-  "if statement" - {
-    "whatwver" in {
+  "emitCode" - {
+    "IfStatement" in {
       /*
        if 0 == 1 then 2 else 3
        */
@@ -160,10 +144,48 @@ class CodeGenTest extends FreeSpec with Matchers {
         SelTL("after4", "terminate"), Label("false3"),
         Ldc(3), Label("after4")))
     }
+
+    "Assign" in {
+      /*
+       var a = 1 + 2
+       */
+      var ast = Assign("a", Plus(Literal(1), Literal(2)))
+      var code = CodeGen.emitCode(ast, Map("a" -> (1, 0)), NameGen())
+      code should equal (List(
+        Ldc(1), Ldc(2), Arith("ADD"), St(1, 0)
+      ))
+    }
+
+    "Return" in {
+      /*
+       return 1 + 2
+       */
+      var ast = Return(Plus(Literal(1), Literal(2)))
+      var code = CodeGen.emitCode(ast, Map(), NameGen())
+      code should equal (List(
+        Ldc(1), Ldc(2), Arith("ADD"), Ret()
+      ))
+    }
+
+    "WhileStatement" in {
+      /*
+       while (1 < 2) {
+         a = a + 1
+       }
+       */
+      var ast = WhileStatement(Lesser(Literal(1), Literal(2)),
+        List(Assign("a", Plus(Reference("a"), Literal(1)))))
+      var code = CodeGen.emitCode(ast, Map("a" -> (1, 0)), NameGen())
+      code should equal (List(
+        Label("while1"), Ldc(2), Ldc(1), Comp("CGT"),
+        SelTL("while_body2", "while_end3"), Label("while_body2"),
+        Ld(1, 0), Ldc(1), Arith("ADD"), St(1, 0),
+        Ldc(0), Ldc(0), Comp("CEQ"), SelTL("while1", "terminate"), Label("while_end3")))
+    }
   }
 
-  "function call" - {
-    "whatwver" in {
+  "emitExpr" - {
+    "FunCall" in {
       var ast = FunCall("mod",
         List(Plus(Literal(1), Reference("a")), Minus(Reference("b"), Literal(3))))
 
@@ -173,14 +195,44 @@ class CodeGenTest extends FreeSpec with Matchers {
         Ld(0, 1), Ldc(3), Arith("SUB"),
         LoadFL("func_mod"), App(2)))
     }
-  }
 
-  "tuple" - {
-    "whatever" in {
+    "Tuple" in {
       var ast = Tuple(List(Literal(1), Literal(2), Literal(3)))
       var code = CodeGen.emitExpr(ast, Map())
       var expected = List(Ldc(1), Ldc(2), Ldc(3), Cons(), Cons())
       code should equal (expected)
+    }
+
+    "List" in {
+      // (Cons "a" (Cons "b" 1))
+      var ast = ConsAst(Reference("a"), ConsAst(Reference("b"), Literal(1)))
+
+      var code = CodeGen.emitExpr(ast, Map("a" -> (0, 1), "b" -> (0, 2)))
+      code should equal (List(
+        Ld(0, 1),
+        Ld(0, 2),
+        Ldc(1),
+        Cons(),
+        Cons()
+      ))
+    }
+
+    "IsAtom()" in {
+      // isAtom(MyList(1, 2))
+      var ast = IsAtom(ConsAst(Literal(1), ConsAst(Literal(2), Literal(0))))
+      var code = CodeGen.emitExpr(ast, Map())
+      code should equal(List(
+        Ldc(1), Ldc(2), Ldc(0), Cons(), Cons(), Atom()
+      ))
+    }
+
+    "Debug()" in {
+      // Debug(a)
+      var ast = Debug(Reference("a"))
+      var code = CodeGen.emitExpr(ast, Map("a" -> (1, 0)))
+      code should equal (List(
+        Ld(1, 0), Dbug()
+      ))
     }
   }
 }

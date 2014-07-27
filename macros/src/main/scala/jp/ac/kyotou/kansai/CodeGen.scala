@@ -106,6 +106,8 @@ object CodeGen {
       case ConsAst(l, r) => emitBinaryOp(Cons(), l, r, vars)
       case CarAst(t) => emitExpr(t, vars) ++ List(Car())
       case CdrAst(t) => emitExpr(t, vars) ++ List(Cdr())
+      case IsAtom(t) => emitExpr(t, vars) ++ List(Atom())
+      case Debug(t) => emitExpr(t, vars) ++ List(Dbug())
       case Equals(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CEQ"))
       case Greater(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CGT"))
       case GreaterEquals(l, r) => emitExpr(l, vars) ++ emitExpr(r, vars) ++ List(Comp("CGTE"))
@@ -145,6 +147,8 @@ object CodeGen {
       case Cons() => "CONS"
       case Car() => "CAR"
       case Cdr() => "CDR"
+      case Atom() => "ATOM"
+      case Dbug() => "DBUG"
       case Label(name) => name + ":"
       case _ => "Not implemented yet"
     }

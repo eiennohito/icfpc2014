@@ -50,9 +50,12 @@ object AstCleanup {
     }
   }
 
-  val allowdedTypes = Set (
+  val atomTypes = Set (
     "scala.Int",
-    "scala.Boolean",
+    "scala.Boolean"
+  )
+  
+  val listTypes = Set (
     "jp.ac.kyotou.kansai.MyList",
     "jp.ac.kyotou.kansai.MyCons",
     "jp.ac.kyotou.kansai.MyNil"
@@ -71,12 +74,26 @@ object AstCleanup {
   def rewriteExpression(expr: ExprAst): ExprAst = {
     expr match {
 
+      case Application("isInt", ThisRef(_), arg :: Nil, _) =>
+        IsAtom(rewriteExpression(arg))
+
+      case Application("debug", ThisRef(_), arg :: Nil, _) =>
+        Debug(rewriteExpression(arg))
+
       case Application(func, ThisRef(_), args, _) =>  FunCall(func, args.map(rewriteExpression))
 
       case Application("at", ctx, Literal(i) :: Nil, "jp.ac.kyotou.kansai.MyList") =>
         CarAst(selectTupleElement(rewriteExpression(ctx), i))
 
-      case Application(name, ctx, arg :: Nil, tpe)  if allowdedTypes.contains(tpe) =>
+      case Application(nm @ ("$eq$eq" | "$bang$eq"), ctx, arg :: Nil, tpe) if listTypes.contains(tpe) =>
+        val res = (ctx, arg) match {
+          case (Reference("MyNil", _), x) => IsAtom(rewriteExpression(x))
+          case (x, Reference("MyNil", _)) => IsAtom(rewriteExpression(x))
+          case _ => throw new RewriteException("unsupported binary operation on lists")
+        }
+        if (nm == "$bang$eq") UnaryNot(res) else res
+
+      case Application(name, ctx, arg :: Nil, tpe)  if atomTypes.contains(tpe) =>
         val left = rewriteExpression(ctx)
         val right = rewriteExpression(arg)
         name match {
@@ -89,6 +106,7 @@ object AstCleanup {
           case "$greater$eq" => GreaterEquals(left, right)
           case "$less" => Lesser(left, right)
           case "$less$eq" => LesserEquals(left, right)
+          case "$bang$eq" => UnaryNot(Equals(left, right))
           case x => throw new RewriteException(s"unsupported prefixed expression $x")
         }
 

@@ -41,6 +41,8 @@ case class LesserEquals(left: ExprAst, right: ExprAst) extends ExprAst
 case class NotEquals(left: ExprAst, right: ExprAst) extends ExprAst
 case class UnaryNot(expr: ExprAst) extends ExprAst
 case class UnaryMinus(expr: ExprAst) extends ExprAst
+case class IsAtom(expr: ExprAst) extends ExprAst
+case class Debug(expr: ExprAst) extends ExprAst
 
 //won't appear in the output
 case class Application(funcName: String, context: ExprAst, args: List[ExprAst], ctxType: String) extends ExprAst
@@ -74,6 +76,10 @@ case class AppT(n: Int) extends Code
 case class Cons() extends Code
 case class Car() extends Code
 case class Cdr() extends Code
+
+// Primitive operators
+case class Atom() extends Code
+case class Dbug() extends Code
 
 // Label
 case class Label(name: String) extends Code

@@ -12,4 +12,6 @@ trait Support {
 
   def isInt(x: Int): Boolean = true
   def isInt[T](x: T): Boolean = false
+
+  def debug(x: Any): Unit = println(x)
 }

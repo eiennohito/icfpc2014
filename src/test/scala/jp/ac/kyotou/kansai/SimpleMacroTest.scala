@@ -52,10 +52,10 @@ class SimpleMacroTest extends FreeSpec with Matchers {
 
       val expected = FunctionDefiniton("lstSum", List("lst"),
         List(
-          IfStatement(
+          Statement(IfExpression(
             IsAtom(CdrAst(Reference("lst", "jp.ac.kyotou.kansai.MyList"))),
             List(Return(Literal(0))),
-            List()),
+            List())),
           Return(Plus(
             CarAst(Reference("lst", "jp.ac.kyotou.kansai.MyList")),
             FunCall("lstSum",List(CdrAst(Reference("lst", "jp.ac.kyotou.kansai.MyList"))))))))
@@ -115,7 +115,7 @@ class SimpleMacroTest extends FreeSpec with Matchers {
     val expected = FunctionDefiniton("debugTest",List(),
       List(
         Assign("x",Literal(5)),
-        Expression(Debug(Reference("x"))),
+        Statement(Debug(Reference("x"))),
         Return(Reference("x"))))
 
     data.get should be (expected)

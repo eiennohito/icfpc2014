@@ -13,7 +13,7 @@ case class AssignConst(name: String, value: Int)
 object MacroTest {
   def codeTest(code: Int): Int = macro MacroTestImpl.codeTest
 
-  def code(code: Any): List[CodeAst] = macro MacroTestImpl.code
+  def code(code: Any): List[StatementAst] = macro MacroTestImpl.code
 }
 
 object MacroTestImpl {

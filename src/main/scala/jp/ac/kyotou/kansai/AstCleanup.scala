@@ -138,6 +138,7 @@ object AstCleanup {
       case x: Application =>
         throw new RuntimeException(s"invalid application $x")
 
+      case IfExpression(cond, tb, fb) => IfExpression(rewriteExpression(cond), rewriteCode(tb), rewriteCode(fb))
       case FunCall("tupleLast", arg :: Literal(x) :: Nil, _) => CdrAst(selectTupleElement(rewriteExpression(arg), x - 2))
       case FunCall("MyCons", arg1 :: arg2 :: Nil, _) => ConsAst(rewriteExpression(arg1), rewriteExpression(arg2))
       case FunCall(nm, args, _) => FunCall(nm, args.map(rewriteExpression))
@@ -147,13 +148,12 @@ object AstCleanup {
     }
   }
 
-  def rewriteCode(code: List[CodeAst]): List[CodeAst] = {
+  def rewriteCode(code: List[StatementAst]): List[StatementAst] = {
     code.map {
       case Assign(name, result) => Assign(name, rewriteExpression(result))
-      case Expression(expr) => Expression(rewriteExpression(expr))
+      case Statement(expr) => Statement(rewriteExpression(expr))
       case Return(expr) => Return(rewriteExpression(expr))
       case Block(expr) => Block(rewriteCode(expr))
-      case IfStatement(cond, tb, fb) => IfStatement(rewriteExpression(cond), rewriteCode(tb), rewriteCode(fb))
       case WhileStatement(cond, bdy) => WhileStatement(rewriteExpression(cond), rewriteCode(bdy))
     }
   }

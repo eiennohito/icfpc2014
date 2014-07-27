@@ -12,7 +12,7 @@ case class NameGen() extends NameGenerator {
 }
 
 object CodeGen {
-  def collectLocalVars(code: List[CodeAst], args: List[String]): List[String] = {
+  def collectLocalVars(code: List[StatementAst], args: List[String]): List[String] = {
     var variables: Set[String] = Set()
     code.foreach(c => c match {
       case Assign(name, _) => variables += name
@@ -42,9 +42,9 @@ object CodeGen {
     }
   }
 
-  def emitCode(code : CodeAst, vars: Map[String, (Int, Int)], gen: NameGenerator): List[Code] = {
+  def emitCode(code : StatementAst, vars: Map[String, (Int, Int)], gen: NameGenerator): List[Code] = {
     code match {
-      case Expression(expr) => emitExpr(expr, vars)
+      case Statement(expr) => emitExpr(expr, vars)
       case Block(content) => content.flatMap(x => emitCode(x, vars, gen))
       case Return(expr) => {
         emitExpr(expr, vars) ++ List(Ret())
@@ -52,7 +52,7 @@ object CodeGen {
       case Assign(name, value) => {
         emitExpr(value, vars) ++ List(St(vars(name)._1, vars(name)._2))
       }
-      case IfStatement(cond, t, f) => {
+      /* case IfExpression(cond, t, f) => {
         var res = Label("if" + gen.get()) :: emitExpr(cond, vars)
         var trueL = "true" + gen.get()
         var falseL = "false" + gen.get()
@@ -61,7 +61,7 @@ object CodeGen {
         res ++= Label(trueL) :: t.flatMap(emitCode(_, vars, gen))
         res ++= List(Ldc(0), Ldc(0), Comp("CEQ"), SelTL(afterL, "terminate"))
         res ++ (Label(falseL) :: f.flatMap(emitCode(_, vars, gen))) ++ List(Label(afterL))
-      }
+      } */
       case WhileStatement(cond, body) => {
         var whileL = "while" + gen.get()
         var bodyL = "while_body" + gen.get()

@@ -81,7 +81,17 @@ object Linker {
         var depends = collectDependsExp(cond, asts)
         depends ++ t.flatMap(collectDependsStmt(_, asts)) ++ f.flatMap(collectDependsStmt(_, asts))
       }
-      case _ => sys.error("Unknown expression: $(_)")
+      case LLMemberCallAst(fnc, args, _) => collectDependsExp(fnc, asts) ++ args.flatMap(collectDependsExp(_, asts))
+      case LLAllocateFrameAst(_) => Nil
+      case x: LLLoadAst => Nil
+      case LLStoreAst(_, _, e) => collectDependsExp(e, asts)
+      case LLLoadFunctionAst(name) => {
+        if (asts isDefinedAt name) {
+          List(name)
+        } else Nil
+      }
+      case LLEmitCode(_, fns) => fns
+      case x => sys.error(s"Unknown expression: $x")
     }
   }
 }

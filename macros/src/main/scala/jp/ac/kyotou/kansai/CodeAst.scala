@@ -19,6 +19,10 @@ case class Return(expr: ExprAst) extends StatementAst
 case class Block(content: List[StatementAst]) extends StatementAst
 case class WhileStatement(condition: ExprAst, body: List[StatementAst]) extends StatementAst
 
+object CodeStmt {
+  def apply(code: Code*) = Statement(LLEmitCode(code.toList))
+}
+
 sealed trait ExprAst
 case class Literal(value: Int) extends ExprAst
 
@@ -59,7 +63,8 @@ case class LLAllocateFrameAst(size: Int) extends ExprAst
  * @param ref
  */
 case class LLLoadFunctionAst(name: String) extends ExprAst
-case class LLMemberCallAst(func: ExprAst, args: List[ExprAst]) extends ExprAst
+case class LLMemberCallAst(func: ExprAst, args: List[ExprAst], call: Int => Code = RApp) extends ExprAst
+case class LLEmitCode(code: List[Code], functions: List[String] = Nil) extends ExprAst
 
 //won't appear in the output
 case class ApplicationAst(funcName: String, context: ExprAst, args: List[ExprAst], ctxType: String) extends ExprAst
@@ -101,6 +106,7 @@ case class LoadFA(addr: Int) extends Code
 case class LoadFL(label: String) extends Code
 case class App(n : Int) extends Code
 case class RApp(n: Int) extends Code
+case class TRApp(n: Int) extends Code
 case class Ret() extends Code
 case class Pop() extends Code
 

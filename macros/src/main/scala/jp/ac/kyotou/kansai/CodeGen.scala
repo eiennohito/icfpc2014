@@ -133,11 +133,12 @@ object CodeGen {
       case LLStoreAst(frame, pos, expr) => emitExpr(expr, vars, gen) ++ List(St(frame, pos))
       case LLAllocateFrameAst(size) => List(Dum(size))
       case LLLoadFunctionAst(name) => List(LoadFL("func_" + name))
-      case LLMemberCallAst(func, args) => {
+      case LLMemberCallAst(func, args, call) => {
         var res = args.flatMap(emitExpr(_, vars, gen))
         res ++= emitExpr(func, vars, gen)
-        res ++ List(RApp(args.length))
+        res ++ List(call(args.length))
       }
+      case LLEmitCode(code, _) => code
       case _ => sys.error("Not implemented : ExprAst")
     }
   }
@@ -156,6 +157,7 @@ object CodeGen {
       case LoadFL(label) => "LDF " + label
       case App(n) => "AP " + n.toString
       case RApp(n) => "RAP " + n.toString
+      case TRApp(n) => "TRAP " + n.toString
       case Ret() => "RTN"
       case Pop() => "DBUG"
       case SelTA(t, f) => "TSEL " + t.toString + " " + f.toString

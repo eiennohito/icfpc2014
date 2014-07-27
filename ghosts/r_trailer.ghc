@@ -15,38 +15,6 @@ mov [5],[1]
 sub [5],[3] ; [5] is ty = ly - gy
 add [5],128 ; [5] is ty + 128
 
-;; up
-int 3
-int 5
-sub b,1
-int 7
-jeq tag0,a,0
-jgt tag1,[5],128
-;jmp tag0:
-mov h,0
-jeq tag0,h,0
-tag1:
-mov a,0
-int 0
-hlt
-tag0:
-
-;; right
-int 3
-int 5
-add a,1
-int 7
-jeq tag2,a,0
-jgt tag3,128,[4]
-;jmp tag2
-mov h,0
-jeq tag2,h,0
-tag3:
-mov a,1
-int 0
-hlt
-tag2:
-
 ;; down
 int 3
 int 5
@@ -64,6 +32,38 @@ hlt
 tag4:
 
 ;; left
+int 3
+int 5
+sub a,1
+int 7
+jeq tag2,a,0
+jgt tag3,[4],128
+;jmp tag2
+mov h,0
+jeq tag2,h,0
+tag3:
 mov a,3
+int 0
+hlt
+tag2:
+
+;; up
+int 3
+int 5
+sub b,1
+int 7
+jeq tag0,a,0
+jgt tag1,[5],128
+;jmp tag0:
+mov h,0
+jeq tag0,h,0
+tag1:
+mov a,0
+int 0
+hlt
+tag0:
+
+;; right
+mov a,1
 int 0
 hlt

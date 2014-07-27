@@ -80,4 +80,18 @@ class SimpleMacroTest extends FreeSpec with Matchers {
     data.get should equal(expected)
   }
 
+  "synctactic sugar for lists" in {
+    val data = Something.cleanAsts.get("listSyntSugar")
+    data should not be(None)
+
+    val expected = FunctionDefiniton("listSyntSugar",List(),
+      List(
+        Assign("list",ConsAst(Literal(1),ConsAst(Literal(2),ConsAst(Literal(3),Literal(0))))),
+        Assign("x",CarAst(CdrAst(Reference("list","jp.ac.kyotou.kansai.MyList")))),
+        Return(Reference("x"))))
+
+    data.get should be (expected)
+
+  }
+
 }

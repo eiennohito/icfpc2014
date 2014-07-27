@@ -86,6 +86,12 @@ class Something extends Support {
     return fn(2)
   }
 
+  def listSyntSugar: Int = {
+    val list = MyList(1, 2, 3)
+    val x = list.at(1)
+    return x
+  }
+
 }
 
 object Something extends AstCleanup {

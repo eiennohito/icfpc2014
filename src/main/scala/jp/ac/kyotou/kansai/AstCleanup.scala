@@ -60,10 +60,21 @@ object AstCleanup {
 
   val functionName = ".*Function(\\d+)".r
 
+  def makeList(asts: List[ExprAst]): ExprAst = {
+    asts match {
+      case Nil => throw new RewriteException("empty lists are not allowed")
+      case x :: Nil => ConsAst(rewriteExpression(x), Literal(0))
+      case x :: xs => ConsAst(rewriteExpression(x), makeList(xs))
+    }
+  }
+
   def rewriteExpression(expr: ExprAst): ExprAst = {
     expr match {
 
       case Application(func, ThisRef(_), args, _) =>  FunCall(func, args.map(rewriteExpression))
+
+      case Application("at", ctx, Literal(i) :: Nil, "jp.ac.kyotou.kansai.MyList") =>
+        CarAst(selectTupleElement(rewriteExpression(ctx), i))
 
       case Application(name, ctx, arg :: Nil, tpe)  if allowdedTypes.contains(tpe) =>
         val left = rewriteExpression(ctx)
@@ -89,6 +100,9 @@ object AstCleanup {
 
       case Application("apply", Reference(name, _), args, functionName(XInt(a))) =>
         FunCall(name, args.map(rewriteExpression), fromVariable = true)
+
+      case Application("apply", Reference("MyList", _), args, _) =>
+        if (args.isEmpty) throw new RewriteException("Can't create empty list") else makeList(args)
 
       case Application(name, ctx, Nil, ctxtype) =>
         val inner = rewriteExpression(ctx)

@@ -82,7 +82,7 @@ object CodeGen {
   def emitExpr(exp : ExprAst, vars: Map[String, (Int, Int)]): List[Code] = {
     exp match {
       case Literal(v) => List(Ldc(v))
-      case FunCall(name, args) => {
+      case FunCall(name, args, _) => {
         var res = args.flatMap(emitExpr(_, vars))
         res ++ List(LoadFL("func_" + name), App(args.length))
       }

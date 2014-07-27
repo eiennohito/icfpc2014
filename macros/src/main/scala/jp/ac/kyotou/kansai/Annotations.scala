@@ -83,7 +83,7 @@ class gccCodeMacroImpl(val c: Context) {
 
   def liftExpr (x: ExprAst): Tree = x match {
     case ast.Literal(i) => q"jp.ac.kyotou.kansai.Literal($i)"
-    case ast.FunCall(name, args) => q"jp.ac.kyotou.kansai.FunCall($name, ${args.map(y => liftExpr(y))})"
+    case ast.FunCall(name, args, tx) => q"jp.ac.kyotou.kansai.FunCall($name, $args, $tx)"
     case ast.Reference(name, tpe) => q"jp.ac.kyotou.kansai.Reference($name, $tpe)"
     case ast.Application(funcName, context, args, tpe) => q"jp.ac.kyotou.kansai.Application($funcName, $context, $args, $tpe)"
     case ast.ConsAst(left, right) => q"jp.ac.kyotou.kansai.ConsAst(${liftExpr(left)}, ${liftExpr(right)})"

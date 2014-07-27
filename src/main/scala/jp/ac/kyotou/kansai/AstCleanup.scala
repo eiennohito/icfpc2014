@@ -58,15 +58,14 @@ object AstCleanup {
     "jp.ac.kyotou.kansai.MyNil"
   )
 
+  val functionName = ".*Function(\\d+)".r
+
   def rewriteExpression(expr: ExprAst): ExprAst = {
     expr match {
 
       case Application(func, ThisRef(_), args, _) =>  FunCall(func, args.map(rewriteExpression))
 
-      case Application(name, ctx, arg :: Nil, tpe) =>
-        if (!allowdedTypes.contains(tpe)) {
-          throw new RewriteException(s"AST rewriter doesn't support binary operations on type $tpe")
-        }
+      case Application(name, ctx, arg :: Nil, tpe)  if allowdedTypes.contains(tpe) =>
         val left = rewriteExpression(ctx)
         val right = rewriteExpression(arg)
         name match {
@@ -88,6 +87,9 @@ object AstCleanup {
       case Application("apply", Reference("MyCons", _), left :: right :: Nil, _) =>
         ConsAst(rewriteExpression(left), rewriteExpression(right))
 
+      case Application("apply", Reference(name, _), args, functionName(XInt(a))) =>
+        FunCall(name, args.map(rewriteExpression), fromVariable = true)
+
       case Application(name, ctx, Nil, ctxtype) =>
         val inner = rewriteExpression(ctx)
         name match {
@@ -104,9 +106,9 @@ object AstCleanup {
       case x: Application =>
         throw new RuntimeException(s"invalid application $x")
 
-      case FunCall("tupleLast", arg :: Literal(x) :: Nil) => CdrAst(selectTupleElement(rewriteExpression(arg), x - 2))
-      case FunCall("MyCons", arg1 :: arg2 :: Nil) => ConsAst(rewriteExpression(arg1), rewriteExpression(arg2))
-      case FunCall(nm, args) => FunCall(nm, args.map(rewriteExpression))
+      case FunCall("tupleLast", arg :: Literal(x) :: Nil, _) => CdrAst(selectTupleElement(rewriteExpression(arg), x - 2))
+      case FunCall("MyCons", arg1 :: arg2 :: Nil, _) => ConsAst(rewriteExpression(arg1), rewriteExpression(arg2))
+      case FunCall(nm, args, _) => FunCall(nm, args.map(rewriteExpression))
       case ConsAst(left, right) => ConsAst(rewriteExpression(left), rewriteExpression(right))
       case Reference("MyNil", _) => Literal(0)
       case x => x

@@ -69,4 +69,15 @@ class SimpleMacroTest extends FreeSpec with Matchers {
     data.toString should not contain("MyNil")
   }
 
+  "highOrderedFns" in {
+    val data = Something.cleanAsts.get("highOrderFn")
+    data should not be (None)
+
+    val expected = FunctionDefiniton("highOrderFn",List("fn"),
+      List(
+        Return(
+          FunCall("fn",List(Literal(2)),true))))
+    data.get should equal(expected)
+  }
+
 }

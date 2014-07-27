@@ -82,7 +82,9 @@ class Something extends Support {
     return (MyCons(5, MyNil), 3)
   }
 
-  def oneMoreMethod: Int = return 21
+  def highOrderFn(fn: Int => Int): Int = {
+    return fn(2)
+  }
 
 }
 

@@ -17,7 +17,14 @@ case class WhileStatement(condition: ExprAst, body: List[CodeAst]) extends CodeA
 
 sealed trait ExprAst
 case class Literal(value: Int) extends ExprAst
-case class FunCall(funcName: String, args: List[ExprAst]) extends ExprAst
+
+/**
+ * Represents a funciton call
+ * @param funcName name of function (global or variable)
+ * @param args function arguments
+ * @param fromVariable if this is true then it was made for variable
+ */
+case class FunCall(funcName: String, args: List[ExprAst], fromVariable: Boolean = false) extends ExprAst
 case class Plus(left: ExprAst, right: ExprAst) extends ExprAst
 case class Minus(left: ExprAst, right: ExprAst) extends ExprAst
 case class Multiply(left: ExprAst, right: ExprAst) extends ExprAst

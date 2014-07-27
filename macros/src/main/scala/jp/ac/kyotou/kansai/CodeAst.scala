@@ -49,6 +49,18 @@ case class IsAtom(expr: ExprAst) extends ExprAst
 case class Debug(expr: ExprAst) extends ExprAst
 case class IfExpression(condition: ExprAst, trueBranch: List[StatementAst], falseBranch: List[StatementAst]) extends ExprAst
 
+//Low level expression AST
+case class LLLoadAst(frame: Int, pos: Int) extends ExprAst
+case class LLStoreAst(frame: Int, pos: Int, expr: ExprAst) extends ExprAst
+case class LLAllocateFrameAst(size: Int) extends ExprAst
+
+/**
+ * Register function to given name to the current environment frame
+ * @param ref
+ */
+case class LLLoadFunctionAst(ref: Reference) extends ExprAst
+case class LLMemberCallAst(ref: Reference, args: List[ExprAst]) extends ExprAst
+
 //won't appear in the output
 case class ApplicationAst(funcName: String, context: ExprAst, args: List[ExprAst], ctxType: String) extends ExprAst
 case class ThisRefAst(name: String) extends ExprAst

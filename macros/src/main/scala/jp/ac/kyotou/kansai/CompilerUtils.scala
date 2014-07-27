@@ -5,8 +5,9 @@ package jp.ac.kyotou.kansai
  * @since 2014-07-27
  */
 object CompilerUtils {
-  def emitLookupTable(funName: String, argName: String, len: Int, ctor: Int => ExprAst): FunctionDefiniton = {
-    val ref = Reference(argName)
+  def emitLookupTable(funName: String, args: List[String], len: Int, ctor: Int => ExprAst): FunctionDefiniton = {
+    val arg :: rest = args
+    val ref = Reference(arg)
     def rec(left: Int, right: Int): ExprAst = {
       if ((left + 1) == right) ctor(left)
       else {
@@ -18,7 +19,7 @@ object CompilerUtils {
         )
       }
     }
-    FunctionDefiniton(funName, argName :: Nil, Return(rec(0, len)) :: Nil)
+    FunctionDefiniton(funName, args, Return(rec(0, len)) :: Nil)
   }
 
   def main(args: Array[String]) {
@@ -34,7 +35,7 @@ class CodeEmitterTest {
 object CodeEmitterTest {
   def main(args: Array[String]) {
     val x = Map(
-      "debugPrint" -> CompilerUtils.emitLookupTable("debugPrint", "x", 10, i => Debug(Literal(i))),
+      "debugPrint" -> CompilerUtils.emitLookupTable("debugPrint", "x" :: Nil, 10000, i => Debug(Literal(i))),
        "test" -> FunctionDefiniton("test", Nil, List(
         Return(FunCall("debugPrint", Literal(7) :: Nil, false))
        )))

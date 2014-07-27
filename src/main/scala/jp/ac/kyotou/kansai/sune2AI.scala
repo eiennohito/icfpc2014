@@ -66,7 +66,7 @@ class sune2AI extends Support {
     return 1 + arraySize2D(lst.cdr)
   }
 
-  def bfs(map : MyList[MyList[Int]], myY : Int, myX : Int) : Int = {
+  def bfs(map : MyList[MyList[Int]], myPos : Point, safeDirection : MyList[Int]) : Int = {
     var height = arraySize2D(map)
     var width = arraySize(map.car)
 
@@ -75,11 +75,11 @@ class sune2AI extends Support {
     var queueX = arrayInit(queueSize, 0)
     var qs = 0
     var qt = 0
-    queueY = arraySet(queueY, qt, myY)
-    queueX = arraySet(queueX, qt, myX)
+    queueY = arraySet(queueY, qt, myPos.y)
+    queueX = arraySet(queueX, qt, myPos.x)
     qt = qt + 1
     var dist = arrayInit2D(height, width, -1)
-    dist = arraySet2D(dist, myY, myX, 0)
+    dist = arraySet2D(dist, myPos.y, myPos.x, 0)
     var prev = arrayInit2D(height, width, -1)
 
     var dy = MyList(-1,0,1,0)
@@ -95,6 +95,7 @@ class sune2AI extends Support {
     var xx = 0
     var pred = true
     var content = 0
+    var firstLoop = true
     while (loop) {
       var y = arrayGet(queueY, qs)
       var x = arrayGet(queueX, qs)
@@ -117,6 +118,11 @@ class sune2AI extends Support {
           if (yy >= height) pred = false
           if (xx < 0) pred = false
           if (xx >= width) pred = false
+          if (firstLoop) {
+            if (arrayGet(safeDirection, d) == 0) {
+              pred = false
+            }
+          }
           if (pred) {
             content = arrayGet2D(map, yy, xx)
             if (content != 0) {
@@ -135,6 +141,7 @@ class sune2AI extends Support {
       if (qs >= qt) {
         loop = false
       }
+      firstLoop = false
     }
 
 
@@ -164,27 +171,81 @@ class sune2AI extends Support {
     return lastDirection
   }
 
+  def getSafeDirection(ghosts : MyList[Ghost], myPos : Point) : MyList[Int] = {
+    if (ghosts == MyNil) {
+      return MyList(1,1,1,1)
+    }
+
+    var res = getSafeDirection(ghosts.cdr, myPos)
+
+    var dy = MyList(-1,0,1,0)
+    var dx = MyList(0,1,0,-1)
+    var ghost = ghosts.car
+    var ghostNextY = ghost.pos.y + arrayGet(dy, ghost.direction)
+    var ghostNextX = ghost.pos.x + arrayGet(dx, ghost.direction)
+    var d = 0
+    var yy = 0
+    var xx = 0
+    var flag1 = false
+    var flag2 = false
+    while (d < 4) {
+      yy = myPos.y + arrayGet(dy, d)
+      xx = myPos.x + arrayGet(dx, d)
+      flag1 = false
+      flag2 = true
+      if (ghost.pos.x != xx) flag2 = false
+      if (ghost.pos.y != yy) flag2 = false
+      if (flag2) flag1 = true
+      flag2 = true
+      if (ghostNextX != xx) flag2 = false
+      if (ghostNextY != yy) flag2 = false
+      if (flag2) flag1 = true
+      flag2 = true
+      if (ghost.pos.x != xx + arrayGet(dx, d)) flag2 = false
+      if (ghost.pos.y != yy + arrayGet(dy, d)) flag2 = false
+      if (flag2) flag1 = true
+
+      if (flag1) {
+        res = arraySet(res, d, 0)
+      }
+      d = d + 1
+    }
+    return res
+  }
+
+  case class Point(x : Int, y : Int)
+  case class Ghost(vitality : Int, pos : Point, direction : Int)
+  case class LambdaMan(vitality : Int, pos : Point, rest : Int)
+  case class World(map : MyList[MyList[Int]], lambdaMan : LambdaMan, ghosts: MyList[Ghost], rest : Int)
+
+  def step(state : Int, world : World) : (Int, Int) = {
+    var pos = world.lambdaMan.pos
+    var safeDirection = getSafeDirection(world.ghosts, pos)
+    // debug(safeDirection)
+    var nextDirection = bfs(world.map, pos, safeDirection)
+    // debug(nextDirection)
+    return (0, nextDirection)
+  }
+
+  def entryPoint(world: Int, undoc: Int): (Int,  (Int,World) => (Int, Int)) = {
+    return (0,step)
+  }
+
   def myMain() : Int = {
     var map = MyList(
       MyList(1,1,2,1),
-      MyList(2,1,0,0),
+      MyList(1,1,0,0),
       MyList(1,1,0,0),
       MyList(0,2,1,0))
+    var lambdaMan = LambdaMan(0, Point(0,0), 0)
+    var ghosts = MyList(Ghost(0, Point(0,1), 0))
+    var world = World(map, lambdaMan, ghosts, 0)
+    step(0, world)
     return 0
-  }
-
-  def step(state : Int, world : (MyList[MyList[Int]], (Int, (Int, Int), Int), Int)) : (Int, Int) = {
-    var map = world._1
-    var pos = world._2._2
-    var myX = pos._1
-    var myY = pos._2
-    return (0, bfs(map, myY, myX))
-  }
-
-  def entryPoint(world: Int, undoc: Int): (Int,  (Int,(MyList[MyList[Int]], (Int, (Int, Int), Int), Int)) => (Int, Int)) = {
-    return (0,step)
-  }
+  }  
 }
+
+import java.io.PrintWriter
 
 object sune2AI extends AstCleanup {
   val asts = ???
@@ -192,24 +253,11 @@ object sune2AI extends AstCleanup {
   def main(args: Array[String]) {
     // var tmp = new sune2AI()
     // tmp.myMain()
-    var gen = NameGen()
-	  var codeList = CodeGen.emitStructure(cleanAsts.get("entryPoint").get, gen)
-
-    codeList ++= CodeGen.emitStructure(cleanAsts.get("arraySize").get, gen)
-    codeList ++= CodeGen.emitStructure(cleanAsts.get("arraySize2D").get, gen)
-    codeList ++= CodeGen.emitStructure(cleanAsts.get("arrayInit").get, gen)
-    codeList ++= CodeGen.emitStructure(cleanAsts.get("arrayGet").get, gen)
-    codeList ++= CodeGen.emitStructure(cleanAsts.get("arraySet").get, gen)
-    codeList ++= CodeGen.emitStructure(cleanAsts.get("arrayInit2D").get, gen)
-    codeList ++= CodeGen.emitStructure(cleanAsts.get("arrayGet2D").get, gen)
-    codeList ++= CodeGen.emitStructure(cleanAsts.get("arraySet2D").get, gen)
-    codeList ++= CodeGen.emitStructure(cleanAsts.get("bfs").get, gen)
-    codeList ++= CodeGen.emitStructure(cleanAsts.get("step").get, gen)
-    
-    // codeList ++= CodeGen.emitStructure(cleanAsts.get("arrayInit2D").get, gen)
-    codeList ++= List(Label("terminate"))
-    // println(codeList.map(CodeGen.show).mkString("", "\n", ""))
-    // println("-----")
-    println(CodeGen.dereferenceLabels(codeList).map(CodeGen.show).mkString("", "\n", ""))
+    // return
+	  var codeList = Linker.compileAndLink(cleanAsts, "entryPoint")
+    // println(CodeGen.dereferenceLabels(codeList).map(CodeGen.show).mkString("", "\n", ""))
+    var p = new PrintWriter("code.txt")
+    p.println(CodeGen.dereferenceLabels(codeList).map(CodeGen.show).mkString("", "\n", ""))
+    p.close()
   }
 }

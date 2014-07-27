@@ -82,9 +82,13 @@ object CodeGen {
   def emitExpr(exp : ExprAst, vars: Map[String, (Int, Int)]): List[Code] = {
     exp match {
       case Literal(v) => List(Ldc(v))
-      case FunCall(name, args, _) => {
+      case FunCall(name, args, isLocal) => {
         var res = args.flatMap(emitExpr(_, vars))
-        res ++ List(LoadFL("func_" + name), App(args.length))
+        if (isLocal) {
+          res ++ List(Ld(vars(name)._1, vars(name)._2), App(args.length))
+        } else {
+          res ++ List(LoadFL("func_" + name), App(args.length))
+        }
       }
       case Plus(l, r) => emitBinaryOp(Arith("ADD"), l, r, vars)
       case Minus(l, r) => emitBinaryOp(Arith("SUB"), l, r, vars)

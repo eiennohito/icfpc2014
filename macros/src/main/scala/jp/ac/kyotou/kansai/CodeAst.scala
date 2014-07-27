@@ -42,6 +42,7 @@ case class NotEquals(left: ExprAst, right: ExprAst) extends ExprAst
 case class UnaryNot(expr: ExprAst) extends ExprAst
 case class UnaryMinus(expr: ExprAst) extends ExprAst
 case class IsAtom(expr: ExprAst) extends ExprAst
+case class Debug(expr: ExprAst) extends ExprAst
 
 //won't appear in the output
 case class Application(funcName: String, context: ExprAst, args: List[ExprAst], ctxType: String) extends ExprAst

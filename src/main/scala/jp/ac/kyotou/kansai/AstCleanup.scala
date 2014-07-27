@@ -77,6 +77,9 @@ object AstCleanup {
       case Application("isInt", ThisRef(_), arg :: Nil, _) =>
         IsAtom(rewriteExpression(arg))
 
+      case Application("debug", ThisRef(_), arg :: Nil, _) =>
+        Debug(rewriteExpression(arg))
+
       case Application(func, ThisRef(_), args, _) =>  FunCall(func, args.map(rewriteExpression))
 
       case Application("at", ctx, Literal(i) :: Nil, "jp.ac.kyotou.kansai.MyList") =>

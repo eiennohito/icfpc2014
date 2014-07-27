@@ -100,6 +100,12 @@ class Something extends Support {
     return x
   }
 
+  def debugTest: Int = {
+    val x = 5
+    debug(x)
+    return x
+  }
+
 }
 
 object Something extends AstCleanup {

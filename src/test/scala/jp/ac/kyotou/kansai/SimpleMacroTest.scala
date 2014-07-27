@@ -108,4 +108,17 @@ class SimpleMacroTest extends FreeSpec with Matchers {
     data.get should be (expected)
   }
 
+  "debug AST is generated from magic function" in {
+    val data = Something.cleanAsts.get("debugTest")
+    data should not be (None)
+
+    val expected = FunctionDefiniton("debugTest",List(),
+      List(
+        Assign("x",Literal(5)),
+        Expression(Debug(Reference("x"))),
+        Return(Reference("x"))))
+
+    data.get should be (expected)
+  }
+
 }

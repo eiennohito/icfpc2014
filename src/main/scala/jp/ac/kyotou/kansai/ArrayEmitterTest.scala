@@ -18,7 +18,7 @@ class ArrayEmitterTest extends Support {
 
   case class Array2D[T](array: MyArray[MyArray[T]], width: Int,
                          get: (Array2D[T], Int, Int) => T,
-                         put: (Array2D[T], Int, Int, T) => Unit)
+                         put: (Array2D[T], Int, Int, T) => Array2D[T])
 
   def Array2D_create[T](width: Int) = {
     val base = MyArray[MyArray[T]]()
@@ -37,10 +37,11 @@ class ArrayEmitterTest extends Support {
     val b = a.get(col)
     b.get(row)
   }
-  def Array2D_put[T](arr: Array2D[T], row: Int, col: Int, obj: T): Unit = {
+  def Array2D_put[T](arr: Array2D[T], row: Int, col: Int, obj: T): Array2D[T] = {
     val a = arr.array
     val b = a.get(col)
     b.put(row, obj)
+    return arr
   }
 }
 

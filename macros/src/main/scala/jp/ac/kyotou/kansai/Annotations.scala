@@ -74,6 +74,18 @@ class gccCodeMacroImpl(val c: Context) {
     }
   }
 
+  implicit val litePattern = Liftable[LiteralCasePattern] { s => liftCasePattern(s) }
+
+  implicit val liftableCasePattern = Liftable[CasePatternAst] { s => liftCasePattern(s) }
+
+  def liftCasePattern(x: CasePatternAst): Tree = x match {
+    case WildcardCasePattern => q"jp.ac.kyotou.kansai.WildcardCasePattern"
+    case LiteralCasePattern(lit) => q"jp.ac.kyotou.kansai.LiteralCasePattern($lit)"
+    case BindingPattern(nm) => q"jp.ac.kyotou.kansai.BindingPattern($nm)"
+    case ExtractorPattern(tpe, pats) => q"jp.ac.kyotou.kansai.ExtractorPattern($tpe, $pats)"
+    case AltPattern(pats) => q"jp.ac.kyotou.kansai.AltPattern($pats)"
+  }
+
   def liftStructure(x: StructureAst): Tree = x match {
     case ast.FunctionDefiniton(name, args, code) => q"jp.ac.kyotou.kansai.FunctionDefiniton($name, $args, $code)"
     case ast.CaseClassDefinition(name, args) => q"jp.ac.kyotou.kansai.CaseClassDefinition($name, $args)"
@@ -98,6 +110,7 @@ class gccCodeMacroImpl(val c: Context) {
     case ast.ThisRefAst(name) => q"jp.ac.kyotou.kansai.ThisRefAst($name)"
     case ast.IfExpression(cond, tb, fb) =>
       q"jp.ac.kyotou.kansai.IfExpression($cond, $tb, $fb)"
+    case PatternMatchAst(ctx, pats) => q"jp.ac.kyotou.kansai.PatternMatchAst($ctx, $pats)"
     case _ => throw new MacroException(s"unsupported expr ast for conversion $x")
   }
 
@@ -137,7 +150,38 @@ class gccCodeMacroImpl(val c: Context) {
         transformBody(thenp),
         transformBody(elsep)
       )
+      case q"$expr match { case ..$pats }" =>
+        PatternMatchAst(transformExprTree(expr), transformPatterns(pats))
       case x => throw new MacroException(s"unsupported expression pattern $x")
+    }
+  }
+
+  def transformPatterns(trees: List[Tree]) = {
+    trees.map(transformPattern)
+  }
+
+  def transformPattern(tree: Tree): (CasePatternAst, Option[ExprAst], ExprAst) = {
+    tree match {
+      case cq"$pat => $bdy" => (transformPatternBody(pat), None, transformStatement(bdy))
+      case cq"$pat if $cnd => $bdy" => (transformPatternBody(pat), Some(transformExprTree(cnd)), transformStatement(bdy))
+    }
+  }
+
+  def transformAltPattern(tree: Tree): LiteralCasePattern = {
+    val tfLast = transformPatternBody(tree)
+    tfLast match {
+      case p: LiteralCasePattern => p
+      case x => throw new MacroException("alt patterns support only literal patterns")
+    }
+  }
+
+  def transformPatternBody(tree: Tree): CasePatternAst = {
+    tree match {
+      case pq"_" => WildcardCasePattern
+      case pq"$x" => LiteralCasePattern(transformExprTree(x))
+      case pq"$name @ $bind" => BindingPattern(name.encodedName.toString)
+      case pq"$tpe(..$pats)" => ExtractorPattern(tree.tpe.typeSymbol.fullName, pats.map(transformPatternBody))
+      case pq"$pat | ..$every" => AltPattern(transformAltPattern(pat) :: every.map(transformAltPattern))
     }
   }
 

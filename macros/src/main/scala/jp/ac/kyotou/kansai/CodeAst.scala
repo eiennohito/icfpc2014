@@ -69,11 +69,21 @@ case class LLEmitCode(code: List[Code], functions: List[String] = Nil) extends E
 //won't appear in the output
 case class ApplicationAst(funcName: String, context: ExprAst, args: List[ExprAst], ctxType: String) extends ExprAst
 case class ThisRefAst(name: String) extends ExprAst
+case class PatternMatchAst(ctx: ExprAst, patterns: List[(CasePatternAst, Option[ExprAst], StatementAst)]) extends ExprAst
+
+sealed trait CasePatternAst
+case object WildcardCasePattern extends CasePatternAst
+case class LiteralCasePattern(lit: ExprAst) extends CasePatternAst
+case class BindingPattern(name: String) extends CasePatternAst
+case class ExtractorPattern(tpe: String, pats: List[CasePatternAst]) extends CasePatternAst
+case class AltPattern(pats: List[LiteralCasePattern]) extends CasePatternAst
+
 
 object ForbiddenAsts {
   val forbidden = Set(
     "ApplicationAst",
-    "ThisRefAst"
+    "ThisRefAst",
+    "PatternMatchAst"
   )
 
   def check(candadates: TraversableOnce[StructureAst]): List[StructureAst] = {

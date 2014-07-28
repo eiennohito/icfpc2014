@@ -70,6 +70,87 @@ class Rewriter(classes: Map[String, CaseClassDefinition]) {
     }
   }
 
+  var counter = 0
+
+  def newName = {
+    val selected = "___PM_TEMPORARY___" + counter
+    counter += 1
+    selected
+  }
+
+  def rewritePatternMatching(ast: ExprAst, pats: List[(CasePatternAst, Option[ExprAst], StatementAst)]): ExprAst = {
+
+    def combine(leftCheck: Option[ExprAst], guard: Option[ExprAst]) = {
+      val newGuard = guard.map(rewriteExpression)
+      val newCheck = leftCheck.map(rewriteExpression)
+
+      newCheck match {
+        case None => newGuard
+        case Some(x) => newGuard match {
+          case Some(y) => Some(Multiply(x, y))
+          case None => Some(x)
+        }
+      }
+    }
+
+    def rewriteOne(result: ExprAst, pat: CasePatternAst, guard: Option[ExprAst]): (List[(String, ExprAst)], Option[ExprAst]) = {
+      pat match {
+        case WildcardCasePattern => (Nil, combine(None, guard))
+        case LiteralCasePattern(exp) => (Nil, combine(Some(exp), guard))
+        case BindingPattern(name) => (name -> result :: Nil, combine(None, guard))
+        case ExtractorPattern(tpe, breaks) =>
+          def creator(tpe: String): (Int, ExprAst) => ExprAst = {
+            tpe match {
+              case x if listTypes.contains(x) =>
+                (i, e) => CarAst(selectTupleElement(e, i - 1))
+              case tupleName(XInt(len)) =>
+                (i, e) => selectTupleElementLen(e, i, len)
+              case x if classTypes.contains(x) =>
+                val ct = classes.get(x).get
+                val len = ct.fields.length
+                (i, e) => selectTupleElementLen(e, i, len)
+              case x => throw new RewriteException(s"unsupported class $x for pattern extraction")
+            }
+          }
+          val fn = creator(tpe)
+          val nms = breaks.zipWithIndex.flatMap {
+            case (y, i) => rewriteOne(fn(i, result), y, None)._1
+          }
+          (nms, combine(None, guard))
+        case AltPattern(items) => Nil -> Some(items.map(_.lit).reduce[ExprAst]((x, y) => Plus(x, y)))
+      }
+    }
+
+    def rec(context: ExprAst, rest: List[(CasePatternAst, Option[ExprAst], StatementAst)]): ExprAst = {
+      rest match {
+        case Nil => Debug(Literal(-124598421))
+        case (p, g, e) :: xs =>
+          val (assignments, checks) = rewriteOne(context, p, g)
+          val body = checks match {
+            case Some(x) => List(Statement(IfExpression(x,
+              rewriteStatements(e  :: Nil),
+              Statement(rec(context, xs)) :: Nil)))
+            case None => rewriteStatements(e  :: Nil)
+          }
+
+          IfExpression (
+          Literal(1),
+          assignments.map {
+            case (nm, expr) => Assign(nm, expr)
+          } ++ body, Nil)
+      }
+    }
+
+    val name = newName
+    val write = Assign(name, rewriteExpression(ast))
+    val ctxt = Reference(name)
+    IfExpression(
+      Literal(0),
+      write :: Statement(rec(ctxt, pats)) :: Nil,
+      Nil
+    )
+  }
+
   def rewriteExpression(expr: ExprAst): ExprAst = {
     expr match {
 
@@ -167,6 +248,8 @@ class Rewriter(classes: Map[String, CaseClassDefinition]) {
 
       case x: ApplicationAst =>
         throw new RuntimeException(s"invalid application $x")
+
+      case PatternMatchAst(ctx, pats) => rewritePatternMatching(ctx, pats)
 
       case IfExpression(cond, tb, fb) => IfExpression(rewriteExpression(cond), rewriteStatements(tb), rewriteStatements(fb))
       case FunCall("tupleLast", arg :: Literal(x) :: Nil, _) => CdrAst(selectTupleElement(rewriteExpression(arg), x - 2))

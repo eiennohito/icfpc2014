@@ -173,6 +173,7 @@ object CodeGen {
       case Cdr() => "CDR"
       case Atom() => "ATOM"
       case Dbug() => "DBUG"
+      case Stop() => "STOP"
       case Label(name) => name + ":"
       case Dum(s) => "DUM " + s.toString
       case _ => "Not implemented yet"

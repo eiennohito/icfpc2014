@@ -126,6 +126,7 @@ case class Cdr() extends Code
 case class Atom() extends Code
 case class Dbug() extends Code
 case class Dum(s: Int) extends Code
+case class Stop() extends Code
 
 // Label
 case class Label(name: String) extends Code

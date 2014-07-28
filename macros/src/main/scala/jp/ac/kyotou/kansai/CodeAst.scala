@@ -60,7 +60,7 @@ case class LLAllocateFrameAst(size: Int) extends ExprAst
 
 /**
  * Register function to given name to the current environment frame
- * @param ref
+ * @param name
  */
 case class LLLoadFunctionAst(name: String) extends ExprAst
 case class LLMemberCallAst(func: ExprAst, args: List[ExprAst], call: Int => Code = RApp) extends ExprAst
@@ -84,7 +84,7 @@ object ForbiddenAsts {
   val forbidden = Set(
     "ApplicationAst",
     "ThisRefAst",
-    "EmptyExpr"
+    "EmptyExpr",
     "ThisRefAst",
     "PatternMatchAst"
   )

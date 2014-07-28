@@ -111,6 +111,7 @@ class gccCodeMacroImpl(val c: Context) {
     case ast.EmptyExpr => q"jp.ac.kyotou.kansai.EmptyExpr"
     case ast.IfExpression(cond, tb, fb) =>
       q"jp.ac.kyotou.kansai.IfExpression($cond, $tb, $fb)"
+    case ast.PatternMatchAst(c, pts) => q"jp.ac.kyotou.kansai.PatternMatchAst($c, $pts)"
     case _ => throw new MacroException(s"unsupported expr ast for conversion $x")
   }
 
@@ -161,7 +162,7 @@ class gccCodeMacroImpl(val c: Context) {
     trees.map(transformPattern)
   }
 
-  def transformPattern(tree: Tree): (CasePatternAst, Option[ExprAst], ExprAst) = {
+  def transformPattern(tree: Tree): (CasePatternAst, Option[ExprAst], StatementAst) = {
     tree match {
       case cq"$pat => $bdy" => (transformPatternBody(pat), None, transformStatement(bdy))
       case cq"$pat if $cnd => $bdy" => (transformPatternBody(pat), Some(transformExprTree(cnd)), transformStatement(bdy))
@@ -179,7 +180,7 @@ class gccCodeMacroImpl(val c: Context) {
   def transformPatternBody(tree: Tree): CasePatternAst = {
     tree match {
       case pq"_" => WildcardCasePattern
-      case pq"$x" => LiteralCasePattern(transformExprTree(x))
+      case pq"${x: Int}" => LiteralCasePattern(ast.Literal(x))
       case pq"$name @ $bind" => BindingPattern(name.encodedName.toString)
       case pq"$tpe(..$pats)" => ExtractorPattern(tree.tpe.typeSymbol.fullName, pats.map(transformPatternBody))
       case pq"$pat | ..$every" => AltPattern(transformAltPattern(pat) :: every.map(transformAltPattern))
@@ -205,6 +206,9 @@ class gccCodeMacroImpl(val c: Context) {
       case q"while ($cond) $body" => ast.WhileStatement(
         transformExprTree(cond), transformBody(body)
       )
+      case q"$a match { case ..$b }" => ast.Statement(transformExprTree(statement))
+      case q"${x: Int}" => Statement(ast.Literal(x))
+      case q"()" => Statement(EmptyExpr)
       case x => throw new MacroException(s"unsupported Scala statement: $x")
     }
   }

@@ -273,6 +273,33 @@ class sune2AI extends Support {
     // debug(safeDirection)
     var nextDirection = bfs(world, safeDirection)
     // debug(nextDirection)
+
+    if (nextDirection == -1) {
+      var dy = MyList(-1,0,1,0)
+      var dx = MyList(0,1,0,-1)
+
+      var safeDir = safeDirection
+      var counter = 0
+      while (safeDir != MyNil) {
+        if (safeDir.car == 1) {
+          var yy = pos.y + dy.car
+          var xx = pos.x + dx.car
+          if (yy >= 0 && yy < height && xx >= 0 && xx < width) {
+            if (map.get(map, yy, xx) != 0) {
+              nextDirection = counter
+            }
+          }
+        }
+        counter = counter + 1
+        safeDir = safeDir.cdr
+        dy = dy.cdr
+        dx = dx.cdr
+      }
+    }
+    if (nextDirection == -1) {
+      nextDirection = 0
+    }
+
     return (0, nextDirection)
   }
 
@@ -296,7 +323,7 @@ class sune2AI extends Support {
 
     var prev = Array2D_create[Int](width)
     prev.valset(prev, width * height, -1)
-    debug((myPos.y, myPos.x))
+    // debug((myPos.y, myPos.x))
     var dy = MyList(-1,0,1,0)
     var dx = MyList(0,1,0,-1)
 
@@ -378,10 +405,14 @@ class sune2AI extends Support {
       firstLoop = false
     }
 
-    // debug(safeDirection)
-    // debug(((myPos.x, myPos.y), (targetX, targetY)))
-    // debug(world.ghosts)
-    if (targetY == -1) return 0
+    debug(safeDirection)
+    debug(((myPos.x, myPos.y), (targetX, targetY)))
+    //debug(world.ghosts)
+
+
+    if (targetY == -1) return -1 // not found
+
+
     var lastDirection = -1
     var update = true
     var y = targetY

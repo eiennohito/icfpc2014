@@ -121,19 +121,22 @@ class Rewriter(classes: Map[String, CaseClassDefinition]) {
       case ApplicationAst("apply", Reference(name, _), args, functionName(XInt(a))) =>
         FunCall(name, args.map(rewriteExpression), fromVariable = true)
 
+      case ApplicationAst("apply", ctx, args, functionName(XInt(a))) =>
+        LLMemberCallAst(rewriteExpression(ctx), args.map(rewriteExpression), App)
+
       case ApplicationAst("apply", Reference("MyList", _), args, _) =>
         if (args.isEmpty) throw new RewriteException("Can't create empty list") else makeList(args)
 
       case ApplicationAst("apply", Reference("MyArray", _), Nil, "jp.ac.kyotou.kansai.MyArray") =>
         FunCall(AstCleanup.createName, Nil)
 
-      case ApplicationAst("get", ctx, Literal(i) :: Nil, "jp.ac.kyotou.kansai.MyArray") =>
+      case ApplicationAst("get", ctx, arg :: Nil, "jp.ac.kyotou.kansai.MyArray") =>
         LLMemberCallAst(
           selectTupleElementLen(rewriteExpression(ctx), 1, 2),
-          List(Literal(i), Literal(0)),
+          List(rewriteExpression(arg), Literal(0)),
           App)
 
-      case ApplicationAst("put", ctx, args @(Literal(i) :: _ :: Nil), "jp.ac.kyotou.kansai.MyArray") =>
+      case ApplicationAst("put", ctx, args @(arg :: _ :: Nil), "jp.ac.kyotou.kansai.MyArray") =>
         LLMemberCallAst(
           selectTupleElementLen(rewriteExpression(ctx), 2, 2),
           args.map(rewriteExpression),

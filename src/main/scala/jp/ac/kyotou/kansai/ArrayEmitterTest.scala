@@ -7,10 +7,22 @@ package jp.ac.kyotou.kansai
 @gccCode
 class ArrayEmitterTest extends Support {
   def test() = {
-    val x = MyArray[Int]()
-    x.put(0, 5)
-    debug(x.get(0))
+    val ta = TestA[SomeState](SomeState(8, MyArray[Int]()), getSomething, putSomething)
+    ta.upd(ta, 0, 5)
+    debug(ta.world(ta, 0))
   }
+
+  def test2(arg: TestA[Int]) = {
+    arg.world(arg, 2) + 1
+  }
+
+  case class SomeState(a: Int, b: MyArray[Int])
+  case class TestA[X](state: X,
+                      world: (TestA[X], Int) => Int,
+                      upd: (TestA[X], Int, Int) => Unit)
+
+  def getSomething(x: TestA[SomeState], y: Int) = x.state.a + x.state.b.get(y)
+  def putSomething(x: TestA[SomeState], where: Int, what: Int) = x.state.b.put(where, what)
 }
 
 /**

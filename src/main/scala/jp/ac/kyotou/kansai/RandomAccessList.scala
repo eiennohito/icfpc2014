@@ -13,7 +13,7 @@ class RandomAccessList extends Support {
   def emptyLeaf_RAL[T]() = Tree[T](1, MyNil, MyNil)
   def isLeaf_RAL[T](v: Tree[T]) = v.ch == MyNil
   def node_RAL[T](v: T, l: Tree[T], r: Tree[T]) = {
-    Tree[T](sizeTree_RAL(l) + sizeTree_RAL(r), MyList(v), MyList(l, r))
+    Tree(sizeTree_RAL(l) + sizeTree_RAL(r), MyList(v), MyList(l, r))
   }
   def leftChild_RAL[T](t: Tree[T]) = t.ch.car
   def rightChild_RAL[T](t: Tree[T]) = t.ch.cdr.car
@@ -21,7 +21,7 @@ class RandomAccessList extends Support {
   case class Digit[T](d: Int, t: Tree[T])
   // type RList = MyList[Digit]
   def isEmpty_RAL[T](l: MyList[Digit[T]]) = l == MyNil
-  def zero_RAL[T](): Digit[T] = Digit[T](0, emptyLeaf_RAL[T]())
+  def zero_RAL[T](): Digit[T] = Digit(0, emptyLeaf_RAL())
 
   def sizeTree_RAL[T](t: Tree[T]): Int = {
     if (isLeaf_RAL(t)) {
@@ -30,24 +30,22 @@ class RandomAccessList extends Support {
       return t.w
     }
   }
-  def link_RAL[T](t1: Tree[T], t2: Tree[T]): Tree[T] = {
-    Tree(sizeTree_RAL[T](t1) + sizeTree_RAL[T](t2), MyNil, MyList(t1, t2))
-  }
+  def link_RAL[T](t1: Tree[T], t2: Tree[T]) = Tree(sizeTree_RAL(t1) + sizeTree_RAL(t2), MyNil, MyList(t1, t2))
   def consTree_RAL[T](t: Tree[T], l: MyList[Digit[T]]): MyList[Digit[T]] = {
-    if (isEmpty_RAL[T](l)) {
-      return MyList(Digit[T](1, t))
+    if (isEmpty_RAL(l)) {
+      return MyList(Digit(1, t))
     } else {
       if (l.car.d == 0) {
-        return MyCons(Digit[T](1, t), l.cdr)
+        return MyCons(Digit(1, t), l.cdr)
       } else {
-        return MyCons(zero_RAL[T](), consTree_RAL[T](link_RAL[T](t, l.car.t), l.cdr))
+        return MyCons(zero_RAL(), consTree_RAL(link_RAL(t, l.car.t), l.cdr))
       }
     }
   }
 
   def unconsTreeAux_RAL[T](t: MyList[Digit[T]]): (Tree[T], MyList[Digit[T]]) = {
     var ts = unconsTree_RAL(t.cdr)
-    return (leftChild_RAL(ts._1), MyCons(Digit[T](1, rightChild_RAL[T](ts._1)), ts._2))
+    return (leftChild_RAL(ts._1), MyCons(Digit(1, rightChild_RAL[T](ts._1)), ts._2))
   }
 
   def unconsTree_RAL[T](t: MyList[Digit[T]]): (Tree[T], MyList[Digit[T]]) = {
@@ -62,19 +60,19 @@ class RandomAccessList extends Support {
       }
     } else {
       // [Zero, ... ]
-      return unconsTreeAux_RAL[T](t)
+      return unconsTreeAux_RAL(t)
     }
   }
 
-  def cons_RAL[T](x: T, ts: MyList[Digit[T]]) = consTree_RAL[T](leaf_RAL[T](x), ts)
-  def head_RAL[T](ts: MyList[Digit[T]]) = unconsTree_RAL[T](ts)._1.v
-  def tail_RAL[T](ts: MyList[Digit[T]]) = unconsTree_RAL[T](ts)._2
+  def cons_RAL[T](x: T, ts: MyList[Digit[T]]) = consTree_RAL(leaf_RAL(x), ts)
+  def head_RAL[T](ts: MyList[Digit[T]]) = unconsTree_RAL(ts)._1.v
+  def tail_RAL[T](ts: MyList[Digit[T]]) = unconsTree_RAL(ts)._2
   def size_RAL[T](ts: MyList[Digit[T]]): Int = {
-    if (isEmpty_RAL[T](ts)) return 0
+    if (isEmpty_RAL(ts)) return 0
     if (ts.car.d == 0) {
-      return size_RAL[T](ts.cdr)
+      return size_RAL(ts.cdr)
     } else {
-      return sizeTree_RAL[T](ts.car.t) + size_RAL[T](ts.cdr)
+      return sizeTree_RAL(ts.car.t) + size_RAL(ts.cdr)
     }
   }
 
@@ -83,9 +81,9 @@ class RandomAccessList extends Support {
       return t.v.car
     } else {
       if (i < (t.w / 2)) {
-        return lookupTree_RAL[T](i, leftChild_RAL(t))
+        return lookupTree_RAL(i, leftChild_RAL(t))
       } else {
-        return lookupTree_RAL[T](i - (t.w / 2), rightChild_RAL(t))
+        return lookupTree_RAL(i - (t.w / 2), rightChild_RAL(t))
       }
     }
   }
@@ -98,42 +96,41 @@ class RandomAccessList extends Support {
       }
     } else {
       if (i < (t.w / 2)) {
-        return Tree[T](t.w, MyNil, MyList(updateTree_RAL[T](i, v, leftChild_RAL[T](t)), rightChild_RAL[T](t)))
+        return Tree(t.w, MyNil, MyList(updateTree_RAL(i, v, leftChild_RAL(t)), rightChild_RAL(t)))
       } else {
-        return Tree[T](t.w, MyNil, MyList(leftChild_RAL[T](t), updateTree_RAL[T](i - (t.w / 2), v, rightChild_RAL[T](t))))
+        return Tree(t.w, MyNil, MyList(leftChild_RAL(t), updateTree_RAL(i - (t.w / 2), v, rightChild_RAL(t))))
       }
     }
   }
 
+
+  // ral[i]
   def lookup_RAL[T](i: Int, ral: MyList[Digit[T]]): T = {
     if (ral.car.d == 0) {
-      return lookup_RAL[T](i, ral.cdr)
+      return lookup_RAL(i, ral.cdr)
     } else {
-      if (i < sizeTree_RAL[T](ral.car.t)) {
-        return lookupTree_RAL[T](i, ral.car.t)
+      if (i < sizeTree_RAL(ral.car.t)) {
+        return lookupTree_RAL(i, ral.car.t)
       } else {
-        return lookup_RAL[T](i - sizeTree_RAL[T](ral.car.t), ral.cdr)
+        return lookup_RAL(i - sizeTree_RAL(ral.car.t), ral.cdr)
       }
     }
   }
 
+  // ral[i] = v
   def update_RAL[T](i: Int, v: T, ral: MyList[Digit[T]]): MyList[Digit[T]] = {
     if (ral.car.d == 0) {
-      return MyCons(zero_RAL[T](), update_RAL[T](i, v, ral.cdr))
+      return MyCons(zero_RAL(), update_RAL(i, v, ral.cdr))
     } else {
-      if (i < sizeTree_RAL[T](ral.car.t)) {
-        return MyCons(Digit[T](1, updateTree_RAL[T](i, v, ral.car.t)), ral.cdr)
+      if (i < sizeTree_RAL(ral.car.t)) {
+        return MyCons(Digit(1, updateTree_RAL[T](i, v, ral.car.t)), ral.cdr)
       } else {
-        return MyCons(Digit[T](1, ral.car.t), update_RAL[T](i - sizeTree_RAL[T](ral.car.t), v, ral.cdr))
+        return MyCons(Digit(1, ral.car.t), update_RAL(i - sizeTree_RAL(ral.car.t), v, ral.cdr))
       }
     }
   }
 
   def ent(): Int = {
-
-    debug(cons_RAL[Int](1, MyNil))
-    debug(cons_RAL[Int](2, cons_RAL(1, MyNil)))
-
     var ral: MyList[Digit[Int]] = cons_RAL(1, cons_RAL(2, cons_RAL(3, cons_RAL(4, MyNil))))
     debug(head_RAL(ral))
     debug(head_RAL(tail_RAL(ral)))

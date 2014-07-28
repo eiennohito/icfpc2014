@@ -33,15 +33,11 @@ class ArrayEmitterTest extends Support {
   }
 
   def Array2D_get[T](arr: Array2D[T], row: Int, col: Int): T = {
-    val a = arr.array
-    val b = a.get(col)
-    b.get(row)
+    arr.array.get(col).get(row)
   }
   def Array2D_put[T](arr: Array2D[T], row: Int, col: Int, obj: T): Array2D[T] = {
-    val a = arr.array
-    val b = a.get(col)
-    b.put(row, obj)
-    return arr
+    arr.array.get(col).put(row, obj)
+    arr
   }
 }
 

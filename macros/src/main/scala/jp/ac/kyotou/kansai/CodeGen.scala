@@ -16,8 +16,13 @@ object CodeGen {
     var variables: Set[String] = Set()
     code.foreach(c => c match {
       case Assign(name, _) => variables += name
-      case Block(content) => variables ++= collectLocalVars(content, args)
       case Statement(expr) => variables ++= collectLocalVarsExp(expr, args)
+      case Return(expr) => variables ++= collectLocalVarsExp(expr, args)
+      case Block(content) => variables ++= collectLocalVars(content, args)
+      case WhileStatement(cond, body) => {
+        variables ++= collectLocalVarsExp(cond, args)
+        variables ++ collectLocalVars(body, args)
+      }
       case _ => ()
     })
     variables.toList.diff(args)

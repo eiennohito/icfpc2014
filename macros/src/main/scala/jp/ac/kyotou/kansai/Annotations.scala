@@ -181,6 +181,7 @@ class gccCodeMacroImpl(val c: Context) {
     tree match {
       case pq"_" => WildcardCasePattern
       case pq"${x: Int}" => LiteralCasePattern(ast.Literal(x))
+      case pq"${x: Boolean}" => LiteralCasePattern(ast.Literal(if (x) 1 else 0))
       case pq"$name @ $bind" => BindingPattern(name.encodedName.toString)
       case pq"$tpe(..$pats)" => ExtractorPattern(tree.tpe.typeSymbol.fullName, pats.map(transformPatternBody))
       case pq"$pat | ..$every" => AltPattern(transformAltPattern(pat) :: every.map(transformAltPattern))

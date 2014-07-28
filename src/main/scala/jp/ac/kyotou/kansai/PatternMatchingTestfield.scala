@@ -38,6 +38,11 @@ class PatternMatchingTestfield {
     case 1 | 2 | 3 | 4 => 0
     case _ => 10
   }
+
+  def bools(x: Boolean) = x match {
+    case true => 5
+    case false => 2
+  }
 }
 
 object PatternMatchingTestfield extends AstCleanup {

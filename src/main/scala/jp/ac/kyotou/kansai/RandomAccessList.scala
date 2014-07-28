@@ -138,6 +138,37 @@ class RandomAccessList extends Support {
     }
   }
 
+  // MyList[MyList[T]] -> MyList[Digit[MyList[Digit[T]]]] (2D random access list)
+  def fromList2D_RAL[T](l: MyList[MyList[T]]): MyList[Digit[MyList[Digit[T]]]] = {
+    if (l == MyNil) {
+      return MyNil
+    } else {
+      return cons_RAL(fromList_RAL(l.car), fromList2D_RAL(l.cdr))
+    }
+  }
+  // return l[y][x]
+  def lookup2D_RAL[T](x: Int, y: Int, l: MyList[Digit[MyList[Digit[T]]]]) = lookup_RAL(y, lookup_RAL(x, l))
+  // l[y][x] = v
+  def update2D_RAL[T](x: Int, y: Int, v: T, l: MyList[Digit[MyList[Digit[T]]]]) = {
+    update_RAL(y, update_RAL(x, v, lookup_RAL(y, l)), l)
+  }
+
+  // create array filled with a constant
+  def constant_RAL[T](size: Int, v: T): MyList[Digit[T]] = {
+    if (size == 0) {
+      return MyNil
+    } else {
+      return cons_RAL(v, constant_RAL(size - 1, v))
+    }
+  }
+  def constant2D_RAL(h: Int, w: Int, v: T): MyList[Digit[MyList[Digit[T]]]] = {
+    if (h == 0) {
+      return MyNil
+    } else {
+      return cons_RAL(constant_RAL(w, v), constant2D_RAL(h - 1, w, v))
+    }
+  }
+
   def ent(): Int = {
     var ral: MyList[Digit[Int]] = cons_RAL(1, cons_RAL(2, cons_RAL(3, cons_RAL(4, MyNil))))
     debug(head_RAL(ral))

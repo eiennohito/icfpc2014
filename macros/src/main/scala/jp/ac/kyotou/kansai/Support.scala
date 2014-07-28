@@ -1,5 +1,7 @@
 package jp.ac.kyotou.kansai
 
+import scala.collection.mutable
+
 /**
  * @author eiennohito
  * @since 2014-07-26
@@ -14,4 +16,15 @@ trait Support {
   def isInt[T](x: T): Boolean = false
 
   def debug(x: Any): Unit = println(x)
+}
+
+class MyArray[T] private (internal: mutable.Map[Int, T]) {
+  def get(i: Int) = internal(i)
+  def put(pos: Int, obj: T) = internal(pos) = obj
+}
+
+object MyArray {
+  def apply[T](): MyArray[T] = {
+    new MyArray[T](new mutable.HashMap[Int, T]())
+  }
 }

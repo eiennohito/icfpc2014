@@ -4,10 +4,10 @@ package jp.ac.kyotou.kansai
  * @author eiennohito
  * @since 2014-07-26
  */
-trait AstCleanup {
+abstract class AstCleanup (maxArray: Int = 100) {
   def asts: Map[String, StructureAst]
 
-  lazy val cleanAsts: Map[String, StructureAst] = AstCleanup.cleanupAsts(asts)
+  lazy val cleanAsts: Map[String, StructureAst] = AstCleanup.cleanupAsts(asts, maxArray)
 }
 
 case class RewriteException(msg: String) extends RuntimeException(msg)
@@ -107,6 +107,8 @@ class Rewriter(classes: Map[String, CaseClassDefinition]) {
           case "$less" => Lesser(left, right)
           case "$less$eq" => LesserEquals(left, right)
           case "$bang$eq" => UnaryNot(Equals(left, right))
+          case "$amp$amp" => Multiply(left, right)
+          case "$bar$bar" => Plus(left, right)
           case x => throw new RewriteException(s"unsupported prefixed expression $x")
         }
 
@@ -119,8 +121,26 @@ class Rewriter(classes: Map[String, CaseClassDefinition]) {
       case ApplicationAst("apply", Reference(name, _), args, functionName(XInt(a))) =>
         FunCall(name, args.map(rewriteExpression), fromVariable = true)
 
+      case ApplicationAst("apply", ctx, args, functionName(XInt(a))) =>
+        LLMemberCallAst(rewriteExpression(ctx), args.map(rewriteExpression), App)
+
       case ApplicationAst("apply", Reference("MyList", _), args, _) =>
         if (args.isEmpty) throw new RewriteException("Can't create empty list") else makeList(args)
+
+      case ApplicationAst("apply", Reference("MyArray", _), Nil, "jp.ac.kyotou.kansai.MyArray") =>
+        FunCall(AstCleanup.createName, Nil)
+
+      case ApplicationAst("get", ctx, arg :: Nil, "jp.ac.kyotou.kansai.MyArray") =>
+        LLMemberCallAst(
+          selectTupleElementLen(rewriteExpression(ctx), 1, 2),
+          List(rewriteExpression(arg), Literal(0)),
+          App)
+
+      case ApplicationAst("put", ctx, args @(arg :: _ :: Nil), "jp.ac.kyotou.kansai.MyArray") =>
+        LLMemberCallAst(
+          selectTupleElementLen(rewriteExpression(ctx), 2, 2),
+          args.map(rewriteExpression),
+          App)
 
       case ApplicationAst("apply", cnt, args, ctpe) if classTypes.contains(ctpe) =>
         makeTuple(args.map(rewriteExpression))
@@ -186,15 +206,47 @@ class Rewriter(classes: Map[String, CaseClassDefinition]) {
 }
 
 object AstCleanup {
-  def cleanupAsts(asts: Map[String, StructureAst]): Map[String, FunctionDefiniton] = {
+
+  val loadName = "Array____Internal___LOAD"
+  val storeName = "Array____Internal___STORE"
+  val createName = "Array____Internal___CREATE"
+  val initName = "Array_____Internal_____INIT_FIRST_STEP"
+  val initName2 = "Array_____Internal_____INIT_SECOND_STEP"
+
+
+  def generateArraySupport(maxArray: Int): Map[String, FunctionDefiniton] = {
+    val create = FunctionDefiniton(createName, Nil, List(
+      Statement(LLAllocateFrameAst(maxArray)),
+      Statement(LLEmitCode((1 to maxArray).map(x => Ldc(0)).toList)),
+      CodeStmt(LoadFL(initName)),
+      CodeStmt(RApp(maxArray)),
+      CodeStmt(Cons()),
+      Return(LLEmitCode(Nil)),
+      CodeStmt(Label(initName)),
+      Statement(LLLoadFunctionAst(loadName)),
+      Statement(LLLoadFunctionAst(storeName)),
+      Return(LLEmitCode(Nil))
+    ))
+
+    val load = CompilerUtils.emitLookupTable(loadName, List("i", "x"), maxArray, i => LLLoadAst(2, i))
+    val store = CompilerUtils.emitLookupTable(storeName, List("i", "x"), maxArray, i => LLStoreAst(2, i, Reference("x")))
+
+    Map(createName -> create, loadName -> load, storeName -> store)
+  }
+
+  def cleanupAsts(asts: Map[String, StructureAst], maxArray: Int): Map[String, FunctionDefiniton] = {
     val classes = asts.collect {
       case (k, v: CaseClassDefinition) => k -> v
     }
     val rewriter = new Rewriter(classes)
-    asts.collect {
+    val inner = asts.collect {
       case (k, FunctionDefiniton(name, args, code)) =>
         k -> FunctionDefiniton(name, args, rewriter.rewrite(code))
     }.toMap
+
+    val arraySupport = generateArraySupport(maxArray)
+
+    arraySupport ++ inner
   }
 }
 

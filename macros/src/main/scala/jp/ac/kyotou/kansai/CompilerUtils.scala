@@ -19,29 +19,13 @@ object CompilerUtils {
         )
       }
     }
-    FunctionDefiniton(funName, args, Return(rec(0, len)) :: Nil)
-  }
 
-  def main(args: Array[String]) {
+    val boundsCheck = IfExpression(
+      Greater(ref, Literal(len)),
+      List(Statement(Debug(Literal(-100000000))), Statement(Debug(ref)), Return(Literal(-100000000))),
+      Return(rec(0, len)) :: Nil
+    )
 
-  }
-}
-
-
-class CodeEmitterTest {
-
-}
-
-object CodeEmitterTest {
-  def main(args: Array[String]) {
-    val x = Map(
-      "debugPrint" -> CompilerUtils.emitLookupTable("debugPrint", "x" :: Nil, 10000, i => Debug(Literal(i))),
-       "test" -> FunctionDefiniton("test", Nil, List(
-        Return(FunCall("debugPrint", Literal(7) :: Nil, false))
-       )))
-    val code = Linker.compileAndLink(x, "test")
-    println(code.map(CodeGen.show).mkString("", "\n", ""))
-    println("-----")
-    println(CodeGen.dereferenceLabels(code).map(CodeGen.show).mkString("", "\n", ""))
+    FunctionDefiniton(funName, args, Statement(boundsCheck) :: Nil)
   }
 }

@@ -130,6 +130,14 @@ class RandomAccessList extends Support {
     }
   }
 
+  def fromList_RAL[T](l: MyList[T]): MyList[Digit[T]] = {
+    if (l == MyNil) {
+      return MyNil
+    } else {
+      return cons_RAL(l.car, fromList_RAL(l.cdr))
+    }
+  }
+
   def ent(): Int = {
     var ral: MyList[Digit[Int]] = cons_RAL(1, cons_RAL(2, cons_RAL(3, cons_RAL(4, MyNil))))
     debug(head_RAL(ral))
@@ -152,7 +160,7 @@ class RandomAccessList extends Support {
     debug(lookup_RAL(4, ral))
     debug(size_RAL(ral))
 
-    //
+    // RAL is generic
     var ral2: MyList[Digit[(Int, Int)]] = cons_RAL((1, 1), cons_RAL((2, 2), cons_RAL((3, 3), MyNil)))
     debug(lookup_RAL(0, ral2))
     debug(lookup_RAL(0, ral2)._1)
@@ -161,6 +169,11 @@ class RandomAccessList extends Support {
     debug(lookup_RAL(2, ral2))
     ral2 = update_RAL(1, (5, 5), ral2)
     debug(lookup_RAL(1, ral2))
+
+    // We can convert lists to RAL.
+    var l: MyList[Int] = MyList(1, 2, 3, 4, 5)
+    var ral3 = fromList_RAL(l)
+    debug(lookup_RAL(1, ral3)) // should be 2
     return 0
   }
 }

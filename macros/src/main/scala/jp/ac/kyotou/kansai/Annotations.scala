@@ -130,7 +130,7 @@ class gccCodeMacroImpl(val c: Context) {
       case q"${lit: Boolean}" => ast.Literal(if (lit) 1 else 0)
       case q"${ref: TermName}" => ast.Reference(ref.decodedName.toString, tree.tpe.typeSymbol.fullName)
       case q"$cont.$value" => ast.ApplicationAst(value.encodedName.toString, transformExprTree(cont), Nil, cont.tpe.typeSymbol.fullName)
-      case q"{ (..$inargs) => $left.$call(..$outargs) }" if checkArgs(inargs, outargs) =>
+      case q"{ (..$inargs) => $left.$call[..$tpe](..$outargs) }" if checkArgs(inargs, outargs) =>
         ast.Reference(call.encodedName.toString, tree.tpe.typeSymbol.fullName)
       case q"if ($cond) $thenp else $elsep" => ast.IfExpression(
         transformExprTree(cond),

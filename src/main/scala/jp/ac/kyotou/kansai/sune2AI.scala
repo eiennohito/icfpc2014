@@ -73,42 +73,59 @@ class sune2AI extends Support {
       MyArray Code
   */
 
-  case class Array2D[T](array: MyArray[T], width: Int,
+  case class Array2D[T](array: MyArray[MyArray[T]], width: Int,
     get: (Array2D[T], Int, Int) => T,
-    put: (Array2D[T], Int, Int, T) => Unit,
+    put: (Array2D[T], Int, Int, T) => Array2D[T],
     valset: (Array2D[T], Int, T) => Unit,
     from_list: (Array2D[T], MyList[MyList[T]], Int) => Unit
   )
 
   def Array2D_create[T](width: Int) = {
-    val internal = MyArray[T]()
-    Array2D[T](internal, width, Array2D_get, Array2D_put, Array2D_valset, Array2D_from_list2D)
+    val base = MyArray[MyArray[T]]()
+    var i = 0
+    var arr: MyArray[T] = MyArray[T]()
+    while (i < width) {
+      base.put(i, arr)
+      arr = MyArray[T]()
+      i = i + 1
+    }
+    Array2D[T](base, width, Array2D_get, Array2D_put, Array2D_valset, Array2D_from_list2D)
   }
 
-  def Array2D_get[T](arr: Array2D[T], row: Int, col: Int): T = arr.array.get(row * arr.width + col)
-  def Array2D_put[T](arr: Array2D[T], row: Int, col: Int, obj: T): Unit = {
-    arr.array.put(row * arr.width + col, obj)
+  def Array2D_get[T](arr: Array2D[T], row: Int, col: Int): T = {
+    arr.array.get(col).get(row)
+  }
+  def Array2D_put[T](arr: Array2D[T], row: Int, col: Int, obj: T): Array2D[T] = {
+    arr.array.get(col).put(row, obj)
+    return arr
   }
 
   def Array2D_valset[T](arr: Array2D[T], size: Int, obj: T): Unit = {
     var i = 0
-    while (i < size) {
-      arr.array.put(i,obj)
-      i = i + 1
+    var j = 0
+    var cnt = 0
+    while (cnt < size) {
+      if (j == arr.width) {
+        j = 0
+        i = i + 1
+      }
+      arr.put(arr,i,j,obj)
+      j = j + 1
+      cnt = cnt + 1
     }
     return
   }
 
-  def Array2D_from_list[T](arr: Array2D[T], lst: MyList[T], cnt: Int) : Int = {
-    if (lst == MyNil) return cnt
-    arr.array.put(cnt, lst.car)
-    return Array2D_from_list[T](arr, lst.cdr, cnt + 1)
+  def Array2D_from_list[T](arr: Array2D[T], lst: MyList[T], y: Int, x: Int) : Unit = {
+    if (lst == MyNil) return
+    arr.put(arr, y, x, lst.car)
+    Array2D_from_list[T](arr, lst.cdr, y, x + 1)
   }
 
-  def Array2D_from_list2D[T](arr: Array2D[T], lst: MyList[MyList[T]], cnt: Int) : Unit = {
+  def Array2D_from_list2D[T](arr: Array2D[T], lst: MyList[MyList[T]], y: Int) : Unit = {
     if (lst == MyNil) return
-    var cnt2 = Array2D_from_list[T](arr, lst.car, cnt)
-    Array2D_from_list2D[T](arr, lst.cdr, cnt2)
+    Array2D_from_list[T](arr, lst.car, y, 0)
+    Array2D_from_list2D[T](arr, lst.cdr, y + 1)
   }
 
 
@@ -409,7 +426,7 @@ class sune2AI extends Support {
 
 import java.io.PrintWriter
 
-object sune2AI extends AstCleanup(1000) {
+object sune2AI extends AstCleanup(300) {
   val asts = ???
 
   def main(args: Array[String]) {

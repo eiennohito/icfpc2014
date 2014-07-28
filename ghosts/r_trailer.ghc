@@ -15,6 +15,10 @@ mov [5],[1]
 sub [5],[3] ; [5] is ty = ly - gy
 add [5],128 ; [5] is ty + 128
 
+int 3
+int 6
+mov [6],a ; [6] is ghost's vitality (0: normal, 1:fright, 3:invisible)
+
 ;; down
 int 3
 int 5
@@ -26,7 +30,12 @@ jgt tag5,128,[5]
 mov h,0
 jeq tag4,h,0
 tag5:
+jeq tag100,[6],1
 mov a,2
+int 0
+hlt
+tag100:
+mov a,0
 int 0
 hlt
 tag4:
@@ -42,7 +51,12 @@ jgt tag3,[4],128
 mov h,0
 jeq tag2,h,0
 tag3:
+jeq tag101,[6],1
 mov a,3
+int 0
+hlt
+tag101:
+mov a,1
 int 0
 hlt
 tag2:
@@ -58,7 +72,12 @@ jgt tag1,[5],128
 mov h,0
 jeq tag0,h,0
 tag1:
+jeq tag102,[6],1
 mov a,0
+int 0
+hlt
+tag102:
+mov a,2
 int 0
 hlt
 tag0:

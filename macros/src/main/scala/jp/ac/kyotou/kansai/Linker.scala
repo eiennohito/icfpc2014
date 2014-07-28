@@ -18,7 +18,7 @@ object Linker {
     var gen = NameGen()
     var code = CodeGen.emitStructure(epAst, gen)
     useFunctions.toList.foreach(func => code ++= CodeGen.emitStructure(asts(func), gen))
-    code ++= List(Label("terminate"))
+    code ++= List(Label("terminate"), Stop())
     return code
   }
 

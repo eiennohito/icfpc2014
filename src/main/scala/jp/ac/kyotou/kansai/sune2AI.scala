@@ -191,7 +191,7 @@ class sune2AI extends Support {
             pred = true
             if (content == 0) pred = false // wall
             if (myVitality == 0) {
-              if (content == 10) pred = false
+              if (content >= 10) pred = false
             }
             if (pred) { // not wall
               if (arrayGet2D(dist, yy, xx) == -1) {
@@ -211,7 +211,9 @@ class sune2AI extends Support {
       firstLoop = false
     }
 
-
+    debug(safeDirection)
+    debug(((myPos.x, myPos.y), (targetX, targetY)))
+    debug(world.ghosts)
     if (targetY == -1) return 0
     var lastDirection = -1
     var update = true
@@ -286,6 +288,10 @@ class sune2AI extends Support {
     var ghost = ghosts.car
     if (ghost.vitality != 2) {
       res = arraySet2D(res, ghost.pos.y, ghost.pos.x, 10)
+    } else {
+      if (arrayGet2D(res, ghost.pos.y, ghost.pos.x) != 10) {
+        res = arraySet2D(res, ghost.pos.y, ghost.pos.x, 11)
+      }
     }
     return res
   }
@@ -296,11 +302,12 @@ class sune2AI extends Support {
   case class World(map : MyList[MyList[Int]], lambdaMan : LambdaMan, ghosts: MyList[Ghost], rest : Int)
 
   def step(state : Int, argWorld : World) : (Int, Int) = {
+    // debug(argWorld.lambdaMan.vitality)
     var myMap = addVisibleGhostToMap(argWorld.ghosts, argWorld.map)
     var world = World(myMap, argWorld.lambdaMan, argWorld.ghosts, 0)
     var pos = world.lambdaMan.pos
     var safeDirection = MyList(1,1,1,1)
-    if (world.lambdaMan.vitality == 0) {
+    if (world.lambdaMan.vitality < 300) {
       safeDirection = getSafeDirection(world.ghosts, pos)
     }
     // debug(safeDirection)
@@ -316,11 +323,11 @@ class sune2AI extends Support {
   def myMain() : Int = {
     var map = MyList(
       MyList(1,1,2,1),
-      MyList(1,1,0,0),
-      MyList(1,1,0,0),
+      MyList(1,1,1,0),
+      MyList(1,1,1,0),
       MyList(0,2,1,0))
-    var lambdaMan = LambdaMan(1, Point(0,0), 0)
-    var ghosts = MyList(Ghost(0, Point(0,1), 0))
+    var lambdaMan = LambdaMan(0, Point(1,1), 0)
+    var ghosts = MyList(Ghost(0, Point(1,3), 1))
     var world = World(map, lambdaMan, ghosts, 0)
     debug(step(0, world))
     return 0

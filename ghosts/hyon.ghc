@@ -1,0 +1,170 @@
+; common proccess
+int 3 ; get ghost index
+int 5 ; get ghost cordinates
+mov [100],a ; [100] is lx
+mov [101],b ; [101] is ly
+
+int 1 ; get 1st lamndaman cordinates
+mov [102],a ; [102] is gx
+mov [103],b ; [103] is gy
+
+mov [104],[100] ;
+sub [104],[102] ; [104] is tx = lx - gx
+add [104],128 ; [104] is tx + 128
+
+mov [105],[101]
+sub [105],[103] ; [105] is ty = ly - gy
+add [105],128 ; [105] is ty + 128
+
+int 3
+int 6
+mov [106],a ; [106] is ghost's status.
+
+
+main:
+jeq main_init_skip,[255],1
+mov [255],1
+mov [200],[104]
+mov [201],[105]
+mov [206],1
+main_init_skip:
+inc [210]
+
+jeq trailer,[106],1 ; must goto trailer
+jeq fickle,[206],1 ; must go to fickle
+
+mov [211],[210]
+div [211],30
+mul [211],30
+jgt skip_check,[210],[211]
+; mov [220],[200]
+; mov [221],[201]
+; mov [200],[104]
+; mov [201],[105]
+; add [220],10
+; add [221],10
+; jlt fickle,[220],[104]
+; jlt fickle,[221],[105]
+jeq fickle,0,0
+
+skip_check:
+jeq trailer,0,0
+
+
+fickle:
+mov [206],1 ; fickle mode flag is true
+inc [207] ; spend time in fickle
+jlt trailer,10,[207] ; if spending 20 times, go to trailer
+
+mov a,255      ; A is the min value.
+mov b,0        ; B is the corresponding direction.
+mov c,255      ; C is the candidate direction for the new min.
+fickle_loop:
+inc c          ; Pick new direction.
+jgt fickle_next,[c],a    ; Jump if count of direction C is above best so far.
+mov a,[c]      ; Save new min.
+mov b,c        ; Save direction.
+fickle_next:
+jlt fickle_loop,c,3      ; Jump target. Loop back if we have not tried all 4 directions.
+mov a,b        ; Actually set desired direction.
+int 0
+int 3          ; Get our ghost index in A.
+int 6          ; Get out current direction in B.
+inc [b]        ; Increment corresponding count.
+hlt            ; Stop.
+
+
+trailer:
+mov [206],0 ; fickle mode is end.
+mov [207],0 ; reset spend time
+
+; call at once
+jeq trailer_init_skip,[130],1
+mov [130],1
+int 3
+mov [110],a
+add [110],17
+trailer_init_skip:
+
+; main loop
+trailer_loop:
+mul [110],253
+add [110],179
+mov [111],[110]
+div [111],8
+and [111],3
+int 3
+int 5
+jeq up,[111],0
+jeq right,[111],1
+jeq down,[111],2
+jeq left,[111],3
+trailer_next:
+jeq trailer_loop,0,0
+
+
+;; up
+up:
+sub b,1
+int 7
+jeq trailer_next,a,0
+jeq fright_up,[6],1
+jgt up_ac,[105],128
+jeq trailer_next,0,0
+fright_up:
+jlt up_ac,[105],128
+jeq trailer_next,0,0
+up_ac:
+mov a,0
+int 0
+hlt
+
+
+;; right
+right:
+add a,1
+int 7
+jeq trailer_next,a,0
+jeq fright_right,[6],1
+jlt right_ac,128,[104]
+jeq trailer_next,0,0
+fright_right:
+jgt right_ac,128,[104]
+jeq trailer_next,0,0
+right_ac:
+mov a,1
+int 0
+hlt
+
+;; down
+down:
+add b,1
+int 7
+jeq trailer_next,a,0
+jeq fright_down,[6],1
+jgt down_ac,128,[105]
+jeq trailer_next,0,0
+fright_down:
+jlt down_ac,128,[104]
+jeq trailer_next,0,0
+down_ac:
+mov a,2
+int 0
+hlt
+
+;; left
+left:
+sub a,1
+int 7
+jeq trailer_next,a,0
+jeq fright_left,[6],1
+jlt left_ac,128,[104]
+jeq trailer_next,0,0
+fright_left:
+jgt left_ac,128,[104]
+jeq trailer_next,0,0
+left_ac:
+mov a,3
+int 0
+hlt
+

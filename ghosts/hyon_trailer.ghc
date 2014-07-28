@@ -1,0 +1,70 @@
+int 3 ; get ghost index
+int 5 ; get ghost cordinates
+mov [0],a ; [0] is lx
+mov [1],b ; [1] is ly
+
+int 1 ; get 1st lamndaman cordinates
+mov [2],a ; [2] is gx
+mov [3],b ; [3] is gy
+
+mov [4],[0] ;
+sub [4],[2] ; [4] is tx = lx - gx
+add [4],128 ; [4] is tx + 128
+
+mov [5],[1]
+sub [5],[3] ; [5] is ty = ly - gy
+add [5],128 ; [5] is ty + 128
+
+;; up
+int 3
+int 5
+sub b,1
+int 7
+jeq tag0,a,0
+jgt tag1,[5],128
+;jmp tag0:
+mov h,0
+jeq tag0,h,0
+tag1:
+mov a,0
+int 0
+hlt
+tag0:
+
+;; right
+int 3
+int 5
+add a,1
+int 7
+jeq tag2,a,0
+jgt tag3,[4],128
+;jmp tag2
+mov h,0
+jeq tag2,h,0
+tag3:
+mov a,3
+int 0
+hlt
+tag2:
+
+;; down
+int 3
+int 5
+add b,1
+int 7
+jeq tag4,a,0
+jgt tag5,128,[5]
+;jmp tag4
+mov h,0
+jeq tag4,h,0
+tag5:
+mov a,2
+int 0
+hlt
+tag4:
+
+;; left
+mov a,1
+int 0
+hlt
+

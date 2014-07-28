@@ -168,8 +168,8 @@ class sune2AI extends Support {
   case class Point(x : Int, y : Int)
   case class Ghost(vitality : Int, pos : Point, direction : Int)
   case class LambdaMan(vitality : Int, pos : Point, rest : Int)
-  case class World(map : Array2D[Int], lambdaMan : LambdaMan, ghosts: MyList[Ghost], height: Int, width: Int)
-  case class ArgWorld(map : MyList[MyList[Int]], lambdaMan : LambdaMan, ghosts: MyList[Ghost], rest : Int)
+  case class World(map : Array2D[Int], lambdaMan : LambdaMan, ghosts: MyList[Ghost], height: Int, width: Int, fruit: Int)
+  case class ArgWorld(map : MyList[MyList[Int]], lambdaMan : LambdaMan, ghosts: MyList[Ghost], fruit : Int)
 
   /*
       Ghost Utility Code
@@ -199,6 +199,8 @@ class sune2AI extends Support {
     var ghost = ghosts.car
     if (ghost.vitality != 2) {
       res.put(res, ghost.pos.y, ghost.pos.x, 10)
+    } else {
+      res.put(res, ghost.pos.y, ghost.pos.x, 11)
     }
     return res
   }
@@ -263,7 +265,8 @@ class sune2AI extends Support {
     var map = Array2D_create[Int](width)
     map.from_list(map, argWorld.map, 0)
     map = addVisibleGhostToMap(argWorld.ghosts, map)
-    var world = World(map, argWorld.lambdaMan, argWorld.ghosts, height, width)
+
+    var world = World(map, argWorld.lambdaMan, argWorld.ghosts, height, width, argWorld.fruit)
 
     var pos = world.lambdaMan.pos
     var safeDirection = MyList(1,1,1,1)
@@ -272,7 +275,8 @@ class sune2AI extends Support {
     }
     // debug(safeDirection)
     var nextDirection = bfs(world, safeDirection)
-    // debug(nextDirection)
+
+    debug(nextDirection)
 
     if (nextDirection == -1) {
       var dy = MyList(-1,0,1,0)
@@ -296,6 +300,7 @@ class sune2AI extends Support {
         dx = dx.cdr
       }
     }
+
     if (nextDirection == -1) {
       nextDirection = 0
     }
@@ -303,12 +308,21 @@ class sune2AI extends Support {
     return (0, nextDirection)
   }
 
+  def any(lst: MyList[Int], pred: Int => Boolean): Boolean = {
+    if (lst == MyNil) return false
+    if (pred(lst.car)) return true
+    return any(lst.cdr, pred)
+  }
+
+  def zeroPredicate(n: Int): Boolean = {
+    return n == 0
+  }
 
   def bfs(world : World, safeDirection : MyList[Int]) : Int = {
     var myPos = world.lambdaMan.pos
     var myVitality = world.lambdaMan.vitality
     var map = world.map
-    
+
     var height = world.height
     var width = world.width
 
@@ -327,11 +341,7 @@ class sune2AI extends Support {
     var dy = MyList(-1,0,1,0)
     var dx = MyList(0,1,0,-1)
 
-    var targetY = -1
-    var targetX = -1
-
     var loop = true
-    var currentDist = 0
     var d = 0
     var yy = 0
     var xx = 0
@@ -340,83 +350,125 @@ class sune2AI extends Support {
     var firstLoop = true
     var found = false
 
-    while (loop) {
+    var nearestPill = Point(-1,-1)
+    var nearestPillDist = 1000000
+    var nearestPowerPill = Point(-1,-1)
+    var nearestPowerPillDist = 1000000
+    var nearestGhost = Point(-1,-1)
+    var nearestGhostDist = 1000000
+    var nearestFruit = Point(-1,-1)
+    var nearestFruitDist = 1000000
+    var nearestSpace = Point(-1,-1)
+    var nearestSpaceDist = 1000000
+
+    while (!isEmpty(queueX)) {
+
       var x = head(queueX)
       var y = head(queueY)
       queueX = tail(queueX)
       queueY = tail(queueY)
 
-      if (myVitality == 0) { // standard mode
-        if (map.get(map, y, x) == 2) { // pill
-          found = true
-        }
-        if (map.get(map, y, x) == 3) { // power pill
-          found = true
-        }
-      } else { // power pill mode
-        if (map.get(map, y, x) == 10) { // visible ghost
-          found = true
+      var currentDist = dist.get(dist, y, x)
+      var pos = Point(x,y)
+
+      var content = map.get(map, y, x)
+      if (content == 2) { // pill
+        if (nearestPill.x == -1) {
+          nearestPill = pos
+          nearestPillDist = currentDist
         }
       }
-
-      if (found) {
-        targetY = y
-        targetX = x
-        loop = false
-      } else {
-        currentDist = dist.get(dist, y, x)
-        d = 0
-        while (d < 4) {
-          yy = y + arrayGet(dy, d)
-          xx = x + arrayGet(dx, d)
-
-          pred = true
-          if (yy < 0) pred = false
-          if (yy >= height) pred = false
-          if (xx < 0) pred = false
-          if (xx >= width) pred = false
-          if (firstLoop) {
-            if (arrayGet(safeDirection, d) == 0) {
-              pred = false
-            }
-          }
-          if (pred) {
-            content = map.get(map, yy, xx)
-            pred = true
-            if (content == 0) pred = false // wall
-            if (myVitality == 0) {
-              if (content >= 10) pred = false
-            }
-            if (pred) { // not wall
-              if (dist.get(dist, yy, xx) == -1) {
-                dist.put(dist, yy, xx, currentDist + 1)
-                queueX = push(queueX, xx)
-                queueY = push(queueY, yy)
-                prev.put(prev, yy, xx, d)
-              }
-            }
-          }
-          d = d + 1
+      if (content == 3) {
+        if (nearestPowerPill.x == -1) {
+          nearestPowerPill = pos
+          nearestPowerPillDist = currentDist
         }
       }
-      if (isEmpty(queueX)) {
-        loop = false
+      if (content == 10) {
+        if (nearestGhost.x == -1) {
+          nearestGhost = pos
+          nearestGhostDist = currentDist
+        }
+      }
+      if (content == 4) {
+        if (nearestFruit.x == -1) {
+          nearestFruit = pos
+          nearestFruitDist = currentDist
+        }
+      }
+      if (content == 1) {
+        if (nearestSpace.x == -1) {
+          nearestSpace = pos
+          nearestSpaceDist = currentDist
+        }
+      }
+      
+      d = 0
+      while (d < 4) {
+        yy = y + arrayGet(dy, d)
+        xx = x + arrayGet(dx, d)
+
+        pred = true
+        if (yy < 0) pred = false
+        if (yy >= height) pred = false
+        if (xx < 0) pred = false
+        if (xx >= width) pred = false
+        if (firstLoop) {
+          if (arrayGet(safeDirection, d) == 0) {
+            pred = false
+          }
+        }
+        if (pred) {
+          content = map.get(map, yy, xx)
+          if (!( content == 0 || (myVitality == 0 && content == 10) )) { // not wall
+            if (dist.get(dist, yy, xx) == -1) {
+              dist.put(dist, yy, xx, currentDist + 1)
+              queueX = push(queueX, xx)
+              queueY = push(queueY, yy)
+              prev.put(prev, yy, xx, d)
+            }
+          }
+        }
+        d = d + 1
       }
       firstLoop = false
     }
 
+    // debug(nearestPill)
+    // debug(nearestPowerPill)
+    // debug(nearestGhost)
+    // debug(nearestFruit)
+
+    var target = Point(-1,-1)
+
+    var emergency = any(safeDirection, zeroPredicate)
+
+    if (nearestGhost.x != -1 && (myVitality > 0 && nearestGhostDist <= 2) || myVitality / 130 > nearestGhostDist) {
+      target = nearestGhost
+    // } else if (emergency) {
+    //   target = nearestSpace
+    } else if (nearestFruit.x != -1 && world.fruit / 130 > nearestFruitDist) {
+      target = nearestFruit
+    } else {
+      if (nearestPillDist < nearestPowerPillDist) {
+        target = nearestPill
+      } else {
+        target = nearestPowerPill
+      }
+    }
+
     debug(safeDirection)
-    debug(((myPos.x, myPos.y), (targetX, targetY)))
+    debug((myPos, target))
     //debug(world.ghosts)
 
 
-    if (targetY == -1) return -1 // not found
+    if (target.x == -1) return -1 // not found
 
 
     var lastDirection = -1
     var update = true
-    var y = targetY
-    var x = targetX
+    var y = target.y
+    var x = target.x
     var direction = 0
     var reverseDirection = 0
     while(update) {
@@ -445,11 +497,11 @@ class sune2AI extends Support {
     var map = MyList(
       MyList(1,1,2,1),
       MyList(1,1,1,0),
-      MyList(1,1,1,0),
-      MyList(0,2,1,0))
+      MyList(1,3,1,0),
+      MyList(0,2,4,0))
     var lambdaMan = LambdaMan(0, Point(1,1), 0)
     var ghosts = MyList(Ghost(0, Point(1,3), 1))
-    var world = ArgWorld(map, lambdaMan, ghosts, 0)
+    var world = ArgWorld(map, lambdaMan, ghosts, 4000)
     debug(step(0, world))
     return 0
   }

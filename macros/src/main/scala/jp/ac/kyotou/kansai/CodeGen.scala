@@ -126,7 +126,7 @@ object CodeGen {
         var afterL = "after" + gen.get()
         res ++= List(SelTL(trueL, falseL))
         res ++= Label(trueL) :: t.flatMap(emitCode(_, vars, gen))
-        res ++= List(Ldc(0), Ldc(0), Comp("CEQ"), SelTL(afterL, "terminate"))
+        res ++= List(Ldc(1), SelTL(afterL, "terminate"))
         res ++ (Label(falseL) :: f.flatMap(emitCode(_, vars, gen))) ++ List(Label(afterL))
       }
       case LLLoadAst(frame, pos) => List(Ld(frame, pos))

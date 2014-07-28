@@ -37,7 +37,7 @@ class ArrayEmitterTest extends Support {
   }
   def Array2D_put[T](arr: Array2D[T], row: Int, col: Int, obj: T): Array2D[T] = {
     arr.array.get(col).put(row, obj)
-    arr
+    return arr
   }
 }
 

@@ -69,10 +69,53 @@ class sune2AI extends Support {
     return 1 + arraySize2D(lst.cdr)
   }
 
+  /*
+      MyArray Code
+  */
+
+  case class Array2D[T](array: MyArray[T], width: Int,
+    get: (Array2D[T], Int, Int) => T,
+    put: (Array2D[T], Int, Int, T) => Unit,
+    valset: (Array2D[T], Int, T) => Unit,
+    from_list: (Array2D[T], MyList[MyList[T]], Int) => Unit
+  )
+
+  def Array2D_create[T](width: Int) = {
+    val internal = MyArray[T]()
+    Array2D[T](internal, width, Array2D_get, Array2D_put, Array2D_valset, Array2D_from_list2D)
+  }
+
+  def Array2D_get[T](arr: Array2D[T], row: Int, col: Int): T = arr.array.get(row * arr.width + col)
+  def Array2D_put[T](arr: Array2D[T], row: Int, col: Int, obj: T): Unit = {
+    arr.array.put(row * arr.width + col, obj)
+  }
+
+  def Array2D_valset[T](arr: Array2D[T], size: Int, obj: T): Unit = {
+    var i = 0
+    while (i < size) {
+      arr.array.put(i,obj)
+      i = i + 1
+    }
+    return
+  }
+
+  def Array2D_from_list[T](arr: Array2D[T], lst: MyList[T], cnt: Int) : Int = {
+    if (lst == MyNil) return cnt
+    arr.array.put(cnt, lst.car)
+    return Array2D_from_list[T](arr, lst.cdr, cnt + 1)
+  }
+
+  def Array2D_from_list2D[T](arr: Array2D[T], lst: MyList[MyList[T]], cnt: Int) : Unit = {
+    if (lst == MyNil) return
+    var cnt2 = Array2D_from_list[T](arr, lst.car, cnt)
+    Array2D_from_list2D[T](arr, lst.cdr, cnt2)
+  }
+
 
   /*
       Rapid Queue Code
   */
+
   def rev_aux(l: MyList[Int], r: MyList[Int]): MyList[Int] = {
     if (l == MyNil) return r
     return rev_aux(l.cdr, MyCons(l.car, r))
@@ -108,7 +151,8 @@ class sune2AI extends Support {
   case class Point(x : Int, y : Int)
   case class Ghost(vitality : Int, pos : Point, direction : Int)
   case class LambdaMan(vitality : Int, pos : Point, rest : Int)
-  case class World(map : MyList[MyList[Int]], lambdaMan : LambdaMan, ghosts: MyList[Ghost], rest : Int)
+  case class World(map : Array2D[Int], lambdaMan : LambdaMan, ghosts: MyList[Ghost], height: Int, width: Int)
+  case class ArgWorld(map : MyList[MyList[Int]], lambdaMan : LambdaMan, ghosts: MyList[Ghost], rest : Int)
 
   /*
       Ghost Utility Code
@@ -132,17 +176,17 @@ class sune2AI extends Support {
     return thereIsVisibleGhost(ghosts.cdr, y, x)
   }
 
-  def addVisibleGhostToMap(ghosts : MyList[Ghost], map : MyList[MyList[Int]]) : MyList[MyList[Int]] = {
+  def addVisibleGhostToMap(ghosts : MyList[Ghost], map : Array2D[Int]) : Array2D[Int] = {
     if (ghosts == MyNil) return map
     var res = addVisibleGhostToMap(ghosts.cdr, map)
     var ghost = ghosts.car
     if (ghost.vitality != 2) {
-      res = arraySet2D(res, ghost.pos.y, ghost.pos.x, 10)
+      res.put(res, ghost.pos.y, ghost.pos.x, 10)
     }
     return res
   }
 
-    def getSafeDirection(ghosts : MyList[Ghost], myPos : Point) : MyList[Int] = {
+  def getSafeDirection(ghosts : MyList[Ghost], myPos : Point) : MyList[Int] = {
     if (ghosts == MyNil) {
       return MyList(1,1,1,1)
     }
@@ -189,16 +233,21 @@ class sune2AI extends Support {
   /*
       Enty Point
   */
-  def entryPoint(world: Int, undoc: Int): (Int,  (Int,World) => (Int, Int)) = {
+  def entryPoint(ArgWorld: Int, undoc: Int): (Int, (Int, ArgWorld) => (Int, Int)) = {
     return (0,step)
   }
 
   /*
       Step Function
   */
-  def step(state : Int, argWorld : World) : (Int, Int) = {
-    var myMap = addVisibleGhostToMap(argWorld.ghosts, argWorld.map)
-    var world = World(myMap, argWorld.lambdaMan, argWorld.ghosts, 0)
+  def step(state : Int, argWorld : ArgWorld) : (Int, Int) = {
+    var height = arraySize2D(argWorld.map)
+    var width = arraySize(argWorld.map.car)
+    var map = Array2D_create[Int](width)
+    map.from_list(map, argWorld.map, 0)
+    map = addVisibleGhostToMap(argWorld.ghosts, map)
+    var world = World(map, argWorld.lambdaMan, argWorld.ghosts, height, width)
+
     var pos = world.lambdaMan.pos
     var safeDirection = MyList(1,1,1,1)
     if (world.lambdaMan.vitality <= 300) {
@@ -216,17 +265,21 @@ class sune2AI extends Support {
     var myVitality = world.lambdaMan.vitality
     var map = world.map
     
-    var height = arraySize2D(map)
-    var width = arraySize(map.car)
+    var height = world.height
+    var width = world.width
 
     var queueX = empty()
     var queueY = empty()
     queueX = push(queueX, myPos.x)
     queueY = push(queueY, myPos.y)
-    var dist = arrayInit2D(height, width, -1)
-    dist = arraySet2D(dist, myPos.y, myPos.x, 0)
-    var prev = arrayInit2D(height, width, -1)
 
+    var dist = Array2D_create[Int](width)
+    dist.valset(dist, width * height, -1)
+    dist.put(dist, myPos.y, myPos.x, 0)
+
+    var prev = Array2D_create[Int](width)
+    prev.valset(prev, width * height, -1)
+    debug((myPos.y, myPos.x))
     var dy = MyList(-1,0,1,0)
     var dx = MyList(0,1,0,-1)
 
@@ -250,14 +303,14 @@ class sune2AI extends Support {
       queueY = tail(queueY)
 
       if (myVitality == 0) { // standard mode
-        if (arrayGet2D(map, y, x) == 2) { // pill
+        if (map.get(map, y, x) == 2) { // pill
           found = true
         }
-        if (arrayGet2D(map, y, x) == 3) { // power pill
+        if (map.get(map, y, x) == 3) { // power pill
           found = true
         }
       } else { // power pill mode
-        if (arrayGet2D(map, y, x) == 10) { // visible ghost
+        if (map.get(map, y, x) == 10) { // visible ghost
           found = true
         }
       }
@@ -267,7 +320,7 @@ class sune2AI extends Support {
         targetX = x
         loop = false
       } else {
-        currentDist = arrayGet2D(dist, y, x)
+        currentDist = dist.get(dist, y, x)
         d = 0
         while (d < 4) {
           yy = y + arrayGet(dy, d)
@@ -284,18 +337,18 @@ class sune2AI extends Support {
             }
           }
           if (pred) {
-            content = arrayGet2D(map, yy, xx)
+            content = map.get(map, yy, xx)
             pred = true
             if (content == 0) pred = false // wall
             if (myVitality == 0) {
               if (content >= 10) pred = false
             }
             if (pred) { // not wall
-              if (arrayGet2D(dist, yy, xx) == -1) {
-                dist = arraySet2D(dist, yy, xx, currentDist + 1)
+              if (dist.get(dist, yy, xx) == -1) {
+                dist.put(dist, yy, xx, currentDist + 1)
                 queueX = push(queueX, xx)
                 queueY = push(queueY, yy)
-                prev = arraySet2D(prev, yy, xx, d)
+                prev.put(prev, yy, xx, d)
               }
             }
           }
@@ -308,9 +361,9 @@ class sune2AI extends Support {
       firstLoop = false
     }
 
-    debug(safeDirection)
-    debug(((myPos.x, myPos.y), (targetX, targetY)))
-    debug(world.ghosts)
+    // debug(safeDirection)
+    // debug(((myPos.x, myPos.y), (targetX, targetY)))
+    // debug(world.ghosts)
     if (targetY == -1) return 0
     var lastDirection = -1
     var update = true
@@ -319,7 +372,7 @@ class sune2AI extends Support {
     var direction = 0
     var reverseDirection = 0
     while(update) {
-      direction = arrayGet2D(prev, y, x)
+      direction = prev.get(prev, y, x)
       if (direction == -1) {
         update = false
       } else {
@@ -348,7 +401,7 @@ class sune2AI extends Support {
       MyList(0,2,1,0))
     var lambdaMan = LambdaMan(0, Point(1,1), 0)
     var ghosts = MyList(Ghost(0, Point(1,3), 1))
-    var world = World(map, lambdaMan, ghosts, 0)
+    var world = ArgWorld(map, lambdaMan, ghosts, 0)
     debug(step(0, world))
     return 0
   }
@@ -356,7 +409,7 @@ class sune2AI extends Support {
 
 import java.io.PrintWriter
 
-object sune2AI extends AstCleanup {
+object sune2AI extends AstCleanup(1000) {
   val asts = ???
 
   def main(args: Array[String]) {

@@ -108,9 +108,9 @@ class gccCodeMacroImpl(val c: Context) {
     case ast.CarAst(target) => q"jp.ac.kyotou.kansai.CarAst(${liftExpr(target)})"
     case ast.CdrAst(target) => q"jp.ac.kyotou.kansai.CdrAst(${liftExpr(target)})"
     case ast.ThisRefAst(name) => q"jp.ac.kyotou.kansai.ThisRefAst($name)"
+    case ast.EmptyExpr => q"jp.ac.kyotou.kansai.EmptyExpr"
     case ast.IfExpression(cond, tb, fb) =>
       q"jp.ac.kyotou.kansai.IfExpression($cond, $tb, $fb)"
-    case PatternMatchAst(ctx, pats) => q"jp.ac.kyotou.kansai.PatternMatchAst($ctx, $pats)"
     case _ => throw new MacroException(s"unsupported expr ast for conversion $x")
   }
 
@@ -143,7 +143,7 @@ class gccCodeMacroImpl(val c: Context) {
       case q"${lit: Boolean}" => ast.Literal(if (lit) 1 else 0)
       case q"${ref: TermName}" => ast.Reference(ref.decodedName.toString, tree.tpe.typeSymbol.fullName)
       case q"$cont.$value" => ast.ApplicationAst(value.encodedName.toString, transformExprTree(cont), Nil, cont.tpe.typeSymbol.fullName)
-      case q"{ (..$inargs) => $left.$call(..$outargs) }" if checkArgs(inargs, outargs) =>
+      case q"{ (..$inargs) => $left.$call[..$tpe](..$outargs) }" if checkArgs(inargs, outargs) =>
         ast.Reference(call.encodedName.toString, tree.tpe.typeSymbol.fullName)
       case q"if ($cond) $thenp else $elsep" => ast.IfExpression(
         transformExprTree(cond),
@@ -152,6 +152,7 @@ class gccCodeMacroImpl(val c: Context) {
       )
       case q"$expr match { case ..$pats }" =>
         PatternMatchAst(transformExprTree(expr), transformPatterns(pats))
+      case q"()" => EmptyExpr
       case x => throw new MacroException(s"unsupported expression pattern $x")
     }
   }

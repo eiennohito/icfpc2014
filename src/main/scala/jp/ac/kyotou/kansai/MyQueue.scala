@@ -2,37 +2,32 @@ package jp.ac.kyotou.kansai
 
 @gccCode
 class MyQueue extends Support {
-  def rev_aux(l: MyList[Int], r: MyList[Int]): MyList[Int] = {
+  def rev_aux[T](l: MyList[T], r: MyList[T]): MyList[T] = {
     if (l == MyNil) return r
     return rev_aux(l.cdr, MyCons(l.car, r))
   }
-  def rev(q: MyList[Int]): MyList[Int] = rev_aux(q, MyNil)
+  def rev[T](q: MyList[T]): MyList[T] = rev_aux(q, MyNil)
 
-  case class MyQueue(f: MyList[Int], b: MyList[Int])
+  case class Queue[T](f: MyList[T], b: MyList[T])
 
-  def empty(): MyQueue = {
-    return MyQueue(MyNil, MyNil)
-  }
-  def isEmpty(q: MyQueue) = q.f == MyNil
+  def empty[T](): Queue[T] = Queue[T](MyNil, MyNil)
+  def isEmpty[T](q: Queue[T]) = q.f == MyNil
 
-  def checkf(q: MyQueue): MyQueue = {
+  def checkf[T](q: Queue[T]): Queue[T] = {
     if (q.f == MyNil) {
-      return MyQueue(rev(q.b), MyNil)
+      return Queue[T](rev(q.b), MyNil)
     } else {
       return q
     }
   }
 
-  def push(q: MyQueue, x: Int): MyQueue = checkf(MyQueue(q.f, MyCons(x, q.b)))
-
-  def pop(q: MyQueue): (Int, MyQueue) = {
-    return (q.f.car, checkf(MyQueue(q.f.cdr, q.b)))
-  }
-  def head(q: MyQueue): Int = q.f.car
-  def tail(q: MyQueue): MyQueue = checkf(MyQueue(q.f.cdr, q.b))
+  def push[T](q: Queue[T], x: T): Queue[T] = checkf(Queue[T](q.f, MyCons(x, q.b)))
+  def pop[T](q: Queue[T]): (T, Queue[T]) = (q.f.car, checkf(Queue[T](q.f.cdr, q.b)))
+  def head[T](q: Queue[T]): T = q.f.car
+  def tail[T](q: Queue[T]): Queue[T] = checkf(Queue[T](q.f.cdr, q.b))
 
   def ent(): Int = {
-    var q: MyQueue = empty()
+    var q: Queue[Int] = empty()
     q = push(q, 1)
     q = push(q, 2)
     q = push(q, 3)

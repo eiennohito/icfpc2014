@@ -1,7 +1,7 @@
 package jp.ac.kyotou.kansai
 
 @gccCode
-class sune2AI extends Support {
+class sune2AIRAL extends Support {
   /*
     List Utility Code
   */
@@ -73,61 +73,232 @@ class sune2AI extends Support {
       MyArray Code
   */
 
-  case class Array2D[T](array: MyArray[MyArray[T]], width: Int,
+  case class Array2D[T](array: MyArray[T], width: Int,
     get: (Array2D[T], Int, Int) => T,
-    put: (Array2D[T], Int, Int, T) => Array2D[T],
+    put: (Array2D[T], Int, Int, T) => Unit,
     valset: (Array2D[T], Int, T) => Unit,
     from_list: (Array2D[T], MyList[MyList[T]], Int) => Unit
   )
 
   def Array2D_create[T](width: Int) = {
-    val base = MyArray[MyArray[T]]()
-    var i = 0
-    var arr: MyArray[T] = MyArray[T]()
-    while (i < width) {
-      base.put(i, arr)
-      arr = MyArray[T]()
-      i = i + 1
-    }
-    Array2D[T](base, width, Array2D_get, Array2D_put, Array2D_valset, Array2D_from_list2D)
+    val internal = MyArray[T]()
+    Array2D[T](internal, width, Array2D_get, Array2D_put, Array2D_valset, Array2D_from_list2D)
   }
 
-  def Array2D_get[T](arr: Array2D[T], row: Int, col: Int): T = {
-    arr.array.get(col).get(row)
-  }
-  def Array2D_put[T](arr: Array2D[T], row: Int, col: Int, obj: T): Array2D[T] = {
-    arr.array.get(col).put(row, obj)
-    return arr
+  def Array2D_get[T](arr: Array2D[T], row: Int, col: Int): T = arr.array.get(row * arr.width + col)
+  def Array2D_put[T](arr: Array2D[T], row: Int, col: Int, obj: T): Unit = {
+    arr.array.put(row * arr.width + col, obj)
   }
 
   def Array2D_valset[T](arr: Array2D[T], size: Int, obj: T): Unit = {
     var i = 0
-    var j = 0
-    var cnt = 0
-    while (cnt < size) {
-      if (j == arr.width) {
-        j = 0
-        i = i + 1
-      }
-      arr.put(arr,i,j,obj)
-      j = j + 1
-      cnt = cnt + 1
+    while (i < size) {
+      arr.array.put(i,obj)
+      i = i + 1
     }
     return
   }
 
-  def Array2D_from_list[T](arr: Array2D[T], lst: MyList[T], y: Int, x: Int) : Unit = {
-    if (lst == MyNil) return
-    arr.put(arr, y, x, lst.car)
-    Array2D_from_list[T](arr, lst.cdr, y, x + 1)
+  def Array2D_from_list[T](arr: Array2D[T], lst: MyList[T], cnt: Int) : Int = {
+    if (lst == MyNil) return cnt
+    arr.array.put(cnt, lst.car)
+    return Array2D_from_list[T](arr, lst.cdr, cnt + 1)
   }
 
-  def Array2D_from_list2D[T](arr: Array2D[T], lst: MyList[MyList[T]], y: Int) : Unit = {
+  def Array2D_from_list2D[T](arr: Array2D[T], lst: MyList[MyList[T]], cnt: Int) : Unit = {
     if (lst == MyNil) return
-    Array2D_from_list[T](arr, lst.car, y, 0)
-    Array2D_from_list2D[T](arr, lst.cdr, y + 1)
+    var cnt2 = Array2D_from_list[T](arr, lst.car, cnt)
+    Array2D_from_list2D[T](arr, lst.cdr, cnt2)
   }
 
+  /*
+   RAL Code
+   */
+
+  // This is an implementation of BinaryRandomAccessList
+  /*
+   cons_RAL, head_RAL, tail_RAL: O(log n)
+   lookup_RAL, update_RAL, size_RAL: O(log n)
+   */
+
+  case class Tree[T](w: Int, v: MyList[T], ch: MyList[Tree[T]])
+  def leaf_RAL[T](t: T) = Tree[T](1, MyList(t), MyNil)
+  def emptyLeaf_RAL[T]() = Tree[T](1, MyNil, MyNil)
+  def isLeaf_RAL[T](v: Tree[T]) = v.ch == MyNil
+  def node_RAL[T](v: T, l: Tree[T], r: Tree[T]) = {
+    Tree(sizeTree_RAL(l) + sizeTree_RAL(r), MyList(v), MyList(l, r))
+  }
+  def leftChild_RAL[T](t: Tree[T]) = t.ch.car
+  def rightChild_RAL[T](t: Tree[T]) = t.ch.cdr.car
+
+  case class Digit[T](d: Int, t: Tree[T])
+  // type RList = MyList[Digit]
+  def isEmpty_RAL[T](l: MyList[Digit[T]]) = l == MyNil
+  def zero_RAL[T](): Digit[T] = Digit(0, emptyLeaf_RAL())
+
+  def sizeTree_RAL[T](t: Tree[T]): Int = {
+    if (isLeaf_RAL(t)) {
+      return 1
+    } else {
+      return t.w
+    }
+  }
+  def link_RAL[T](t1: Tree[T], t2: Tree[T]) = Tree(sizeTree_RAL(t1) + sizeTree_RAL(t2), MyNil, MyList(t1, t2))
+  def consTree_RAL[T](t: Tree[T], l: MyList[Digit[T]]): MyList[Digit[T]] = {
+    if (isEmpty_RAL(l)) {
+      return MyList(Digit(1, t))
+    } else {
+      if (l.car.d == 0) {
+        return MyCons(Digit(1, t), l.cdr)
+      } else {
+        return MyCons(zero_RAL(), consTree_RAL(link_RAL(t, l.car.t), l.cdr))
+      }
+    }
+  }
+
+  def unconsTreeAux_RAL[T](t: MyList[Digit[T]]): (Tree[T], MyList[Digit[T]]) = {
+    var ts = unconsTree_RAL(t.cdr)
+    return (leftChild_RAL(ts._1), MyCons(Digit(1, rightChild_RAL[T](ts._1)), ts._2))
+  }
+
+  def unconsTree_RAL[T](t: MyList[Digit[T]]): (Tree[T], MyList[Digit[T]]) = {
+    var td: Digit[T] = t.car
+    if (td.d == 1) {
+      if (t.cdr == MyNil) {
+        // [One t]
+        return (td.t, MyNil)
+      } else {
+        // [One t, ... ]
+        return (td.t, MyCons(zero_RAL[T](), t.cdr))
+      }
+    } else {
+      // [Zero, ... ]
+      return unconsTreeAux_RAL(t)
+    }
+  }
+
+  def cons_RAL[T](x: T, ts: MyList[Digit[T]]) = consTree_RAL(leaf_RAL(x), ts)
+  def head_RAL[T](ts: MyList[Digit[T]]) = unconsTree_RAL(ts)._1.v
+  def tail_RAL[T](ts: MyList[Digit[T]]) = unconsTree_RAL(ts)._2
+  def size_RAL[T](ts: MyList[Digit[T]]): Int = {
+    if (isEmpty_RAL(ts)) return 0
+    if (ts.car.d == 0) {
+      return size_RAL(ts.cdr)
+    } else {
+      return sizeTree_RAL(ts.car.t) + size_RAL(ts.cdr)
+    }
+  }
+
+  def lookupTree_RAL[T](i: Int, t: Tree[T]): T = {
+    if (isLeaf_RAL(t)) {
+      return t.v.car
+    } else {
+      if (i < (t.w / 2)) {
+        return lookupTree_RAL(i, leftChild_RAL(t))
+      } else {
+        return lookupTree_RAL(i - (t.w / 2), rightChild_RAL(t))
+      }
+    }
+  }
+  def updateTree_RAL[T](i: Int, v: T, t: Tree[T]): Tree[T] = {
+    if (isLeaf_RAL(t)) {
+      if (i == 0) {
+        return leaf_RAL(v)
+      } else {
+        return emptyLeaf_RAL()
+      }
+    } else {
+      if (i < (t.w / 2)) {
+        return Tree(t.w, MyNil, MyList(updateTree_RAL(i, v, leftChild_RAL(t)), rightChild_RAL(t)))
+      } else {
+        return Tree(t.w, MyNil, MyList(leftChild_RAL(t), updateTree_RAL(i - (t.w / 2), v, rightChild_RAL(t))))
+      }
+    }
+  }
+
+
+  // ral[i]
+  def lookup_RAL[T](i: Int, ral: MyList[Digit[T]]): T = {
+    if (ral.car.d == 0) {
+      return lookup_RAL(i, ral.cdr)
+    } else {
+      if (i < sizeTree_RAL(ral.car.t)) {
+        return lookupTree_RAL(i, ral.car.t)
+      } else {
+        return lookup_RAL(i - sizeTree_RAL(ral.car.t), ral.cdr)
+      }
+    }
+  }
+
+  // ral[i] = v
+  def update_RAL[T](i: Int, v: T, ral: MyList[Digit[T]]): MyList[Digit[T]] = {
+    if (ral.car.d == 0) {
+      return MyCons(zero_RAL(), update_RAL(i, v, ral.cdr))
+    } else {
+      if (i < sizeTree_RAL(ral.car.t)) {
+        return MyCons(Digit(1, updateTree_RAL[T](i, v, ral.car.t)), ral.cdr)
+      } else {
+        return MyCons(Digit(1, ral.car.t), update_RAL(i - sizeTree_RAL(ral.car.t), v, ral.cdr))
+      }
+    }
+  }
+
+  def fromList_RAL[T](l: MyList[T]): MyList[Digit[T]] = {
+    if (l == MyNil) {
+      return MyNil
+    } else {
+      return cons_RAL(l.car, fromList_RAL(l.cdr))
+    }
+  }
+
+  // MyList[MyList[T]] -> MyList[Digit[MyList[Digit[T]]]] (2D random access list)
+  def fromList2D_RAL[T](l: MyList[MyList[T]]): MyList[Digit[MyList[Digit[T]]]] = {
+    if (l == MyNil) {
+      return MyNil
+    } else {
+      return cons_RAL(fromList_RAL(l.car), fromList2D_RAL(l.cdr))
+    }
+  }
+  // return l[y][x]
+  def lookup2D_RAL[T](x: Int, y: Int, l: MyList[Digit[MyList[Digit[T]]]]) = lookup_RAL(y, lookup_RAL(x, l))
+  // l[y][x] = v
+  def update2D_RAL[T](x: Int, y: Int, v: T, l: MyList[Digit[MyList[Digit[T]]]]) = {
+    update_RAL(y, update_RAL(x, v, lookup_RAL(y, l)), l)
+  }
+
+  // create array filled with a constant
+  def constant_RAL[T](size: Int, v: T): MyList[Digit[T]] = {
+    if (size == 0) {
+      return MyNil
+    } else {
+      return cons_RAL(v, constant_RAL(size - 1, v))
+    }
+  }
+  def constant2D_RAL[T](h: Int, w: Int, v: T): MyList[Digit[MyList[Digit[T]]]] = {
+    if (h == 0) {
+      return MyNil
+    } else {
+      return cons_RAL(constant_RAL(w, v), constant2D_RAL(h - 1, w, v))
+    }
+  }  
+
+  case class RAL2D[T](data: MyList[Digit[MyList[Digit[T]]]], width: Int,
+    get: (RAL2D[T], Int, Int) => T,
+    put: (RAL2D[T], Int, Int, T) => RAL2D[T]
+  )
+
+  def RAL2D_create_constant[T](h: Int, w: Int, v: T) : RAL2D[T] = {
+    val data = constant2D_RAL[T](h,w,v)
+    RAL2D[T](data, w, RAL2D_get, RAL2D_put)
+  }
+  def RAL2D_create_from_list[T](lst: MyList[MyList[T]], w: Int) : RAL2D[T] = {
+    val data = fromList2D_RAL[T](lst)
+    RAL2D[T](data, w, RAL2D_get, RAL2D_put)
+  }
+  def RAL2D_get[T](arr: RAL2D[T], row: Int, col: Int): T = lookup2D_RAL(row, col, arr.data)
+  def RAL2D_put[T](arr: RAL2D[T], row: Int, col: Int, obj: T): RAL2D[T] = {
+    RAL2D(update2D_RAL(col, row, obj, arr.data), arr.width, arr.get, arr.put)
+  }
 
   /*
       Rapid Queue Code
@@ -168,7 +339,7 @@ class sune2AI extends Support {
   case class Point(x : Int, y : Int)
   case class Ghost(vitality : Int, pos : Point, direction : Int)
   case class LambdaMan(vitality : Int, pos : Point, rest : Int)
-  case class World(map : Array2D[Int], lambdaMan : LambdaMan, ghosts: MyList[Ghost], height: Int, width: Int)
+  case class World(map : RAL2D[Int], lambdaMan : LambdaMan, ghosts: MyList[Ghost], height: Int, width: Int)
   case class ArgWorld(map : MyList[MyList[Int]], lambdaMan : LambdaMan, ghosts: MyList[Ghost], rest : Int)
 
   /*
@@ -193,12 +364,12 @@ class sune2AI extends Support {
     return thereIsVisibleGhost(ghosts.cdr, y, x)
   }
 
-  def addVisibleGhostToMap(ghosts : MyList[Ghost], map : Array2D[Int]) : Array2D[Int] = {
+  def addVisibleGhostToMap(ghosts : MyList[Ghost], map : RAL2D[Int]) : RAL2D[Int] = {
     if (ghosts == MyNil) return map
     var res = addVisibleGhostToMap(ghosts.cdr, map)
     var ghost = ghosts.car
     if (ghost.vitality != 2) {
-      res.put(res, ghost.pos.y, ghost.pos.x, 10)
+      res = res.put(res, ghost.pos.y, ghost.pos.x, 10)
     }
     return res
   }
@@ -260,8 +431,9 @@ class sune2AI extends Support {
   def step(state : Int, argWorld : ArgWorld) : (Int, Int) = {
     var height = arraySize2D(argWorld.map)
     var width = arraySize(argWorld.map.car)
-    var map = Array2D_create[Int](width)
-    map.from_list(map, argWorld.map, 0)
+    // var map = Array2D_create[Int](width)
+    // map.from_list(map, argWorld.map, 0)
+    var map = RAL2D_create_from_list(argWorld.map, width)
     map = addVisibleGhostToMap(argWorld.ghosts, map)
     var world = World(map, argWorld.lambdaMan, argWorld.ghosts, height, width)
 
@@ -290,13 +462,14 @@ class sune2AI extends Support {
     queueX = push(queueX, myPos.x)
     queueY = push(queueY, myPos.y)
 
-    var dist = Array2D_create[Int](width)
-    dist.valset(dist, width * height, -1)
-    dist.put(dist, myPos.y, myPos.x, 0)
+    // var dist = Array2D_create[Int](width)
+    // dist.valset(dist, width * height, -1)
+    var dist = RAL2D_create_constant(height, width, -1)
+    dist = dist.put(dist, myPos.y, myPos.x, 0)
+    // var prev = Array2D_create[Int](width)
+    // prev.valset(prev, width * height, -1)
+    var prev = RAL2D_create_constant(height, width, -1)
 
-    var prev = Array2D_create[Int](width)
-    prev.valset(prev, width * height, -1)
-    debug((myPos.y, myPos.x))
     var dy = MyList(-1,0,1,0)
     var dx = MyList(0,1,0,-1)
 
@@ -316,6 +489,7 @@ class sune2AI extends Support {
     while (loop) {
       var x = head(queueX)
       var y = head(queueY)
+      // debug(((y,x), map.get(map, y, x)))
       queueX = tail(queueX)
       queueY = tail(queueY)
 
@@ -362,10 +536,10 @@ class sune2AI extends Support {
             }
             if (pred) { // not wall
               if (dist.get(dist, yy, xx) == -1) {
-                dist.put(dist, yy, xx, currentDist + 1)
+                dist = dist.put(dist, yy, xx, currentDist + 1)
                 queueX = push(queueX, xx)
                 queueY = push(queueY, yy)
-                prev.put(prev, yy, xx, d)
+                prev = prev.put(prev, yy, xx, d)
               }
             }
           }
@@ -411,13 +585,18 @@ class sune2AI extends Support {
     Debug on Scala Utility Code
   */
   def myMain() : Int = {
+    // var arr = RAL2D_create_constant(3,3,1)
+    // debug(arr.get(arr,1,1))
+    // arr = arr.put(arr,1,1,10)
+    // debug(arr.get(arr,1,1))
+    // return 0
     var map = MyList(
       MyList(1,1,2,1),
       MyList(1,1,1,0),
       MyList(1,1,1,0),
       MyList(0,2,1,0))
     var lambdaMan = LambdaMan(0, Point(1,1), 0)
-    var ghosts = MyList(Ghost(0, Point(1,3), 1))
+    var ghosts = MyList(Ghost(0, Point(1,0), 1))
     var world = ArgWorld(map, lambdaMan, ghosts, 0)
     debug(step(0, world))
     return 0
@@ -426,11 +605,11 @@ class sune2AI extends Support {
 
 import java.io.PrintWriter
 
-object sune2AI extends AstCleanup(300) {
+object sune2AIRAL extends AstCleanup {
   val asts = ???
 
   def main(args: Array[String]) {
-    // var tmp = new sune2AI()
+    // var tmp = new sune2AIRAL()
     // tmp.myMain()
     // return
 	  var codeList = Linker.compileAndLink(cleanAsts, "entryPoint")

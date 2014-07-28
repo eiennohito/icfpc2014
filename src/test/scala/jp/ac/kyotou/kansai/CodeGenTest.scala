@@ -78,6 +78,30 @@ class CodeGenTest extends FreeSpec with Matchers {
         Arith("SUB")
       ))
     }
+
+    "local vars in if expression" in {
+      /*
+       def f() = {
+         if (1 == 1) {
+           var e = 10
+           return e + 1
+         } else {
+           return 2
+         }
+       }
+       */
+      var ast = FunctionDefiniton("f", List[String](), List(
+        Return(IfExpression(Equals(Literal(1), Literal(1)),
+          List(Assign("e", Literal(10)), Return(Plus(Reference("e"), Literal(1)))), // true branch
+          List(Return(Literal(2)))))))
+      var code = CodeGen.emitStructure(ast, NameGen())
+      code should equal(List(
+        Label("func_f"), Ldc(0), LoadFL("body_f"), AppT(1), Label("body_f"),
+        Label("if1"), Ldc(1), Ldc(1), Comp("CEQ"), SelTL("true2", "false3"),
+        Label("true2"), Ldc(10), St(0, 0), Ld(0, 0), Ldc(1), Arith("ADD"), Ret(),
+        Ldc(1), SelTL("after4", "terminate"), Label("false3"), Ldc(2), Ret(),
+        Label("after4"), Ret()))
+    }
   }
 
   "dereferenceLabels" - {
@@ -245,7 +269,7 @@ class CodeGenTest extends FreeSpec with Matchers {
       var code = CodeGen.emitExpr(ast, Map(), NameGen())
       code should equal (List(
         Label("if1"), Ldc(0), Ldc(1), Comp("CEQ"), SelTL("true2", "false3"),
-        Label("true2"), Ldc(2), Ldc(0), Ldc(0), Comp("CEQ"),
+        Label("true2"), Ldc(2), Ldc(1),
         SelTL("after4", "terminate"), Label("false3"),
         Ldc(3), Label("after4")))
     }
@@ -262,7 +286,7 @@ class CodeGenTest extends FreeSpec with Matchers {
       var code = CodeGen.emitCode(ast, Map("a" -> (0, 1)), NameGen())
       code should equal (List(
         Label("if1"), Ldc(0), Ldc(1), Comp("CEQ"), SelTL("true2", "false3"),
-        Label("true2"), Ldc(3), Ldc(0), Ldc(0), Comp("CEQ"),
+        Label("true2"), Ldc(3), Ldc(1),
         SelTL("after4", "terminate"), Label("false3"),
         Ldc(4), Label("after4"), St(0, 1)))
     }

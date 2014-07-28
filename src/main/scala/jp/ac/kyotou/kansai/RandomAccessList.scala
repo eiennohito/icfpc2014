@@ -161,7 +161,7 @@ class RandomAccessList extends Support {
       return cons_RAL(v, constant_RAL(size - 1, v))
     }
   }
-  def constant2D_RAL(h: Int, w: Int, v: T): MyList[Digit[MyList[Digit[T]]]] = {
+  def constant2D_RAL[T](h: Int, w: Int, v: T): MyList[Digit[MyList[Digit[T]]]] = {
     if (h == 0) {
       return MyNil
     } else {

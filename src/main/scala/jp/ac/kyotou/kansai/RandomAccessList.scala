@@ -24,10 +24,9 @@ class RandomAccessList extends Support {
   def zero_RAL[T](): Digit[T] = Digit(0, emptyLeaf_RAL())
 
   def sizeTree_RAL[T](t: Tree[T]): Int = {
-    if (isLeaf_RAL(t)) {
-      return 1
-    } else {
-      return t.w
+    isLeaf_RAL(t) match {
+      case true => 1
+      case _ => t.w
     }
   }
   def link_RAL[T](t1: Tree[T], t2: Tree[T]) = Tree(sizeTree_RAL(t1) + sizeTree_RAL(t2), MyNil, MyList(t1, t2))
@@ -35,10 +34,9 @@ class RandomAccessList extends Support {
     if (isEmpty_RAL(l)) {
       return MyList(Digit(1, t))
     } else {
-      if (l.car.d == 0) {
-        return MyCons(Digit(1, t), l.cdr)
-      } else {
-        return MyCons(zero_RAL(), consTree_RAL(link_RAL(t, l.car.t), l.cdr))
+      l.car.d match {
+        case 0 => MyCons(Digit(1, t), l.cdr)
+        case _ => MyCons(zero_RAL(), consTree_RAL(link_RAL(t, l.car.t), l.cdr))
       }
     }
   }
@@ -51,12 +49,9 @@ class RandomAccessList extends Support {
   def unconsTree_RAL[T](t: MyList[Digit[T]]): (Tree[T], MyList[Digit[T]]) = {
     var td: Digit[T] = t.car
     if (td.d == 1) {
-      if (t.cdr == MyNil) {
-        // [One t]
-        return (td.t, MyNil)
-      } else {
-        // [One t, ... ]
-        return (td.t, MyCons(zero_RAL[T](), t.cdr))
+      (t.cdr == MyNil) match {
+        case true => (td.t, MyNil)
+        case _ => (td.t, MyCons(zero_RAL[T](), t.cdr))
       }
     } else {
       // [Zero, ... ]
@@ -69,10 +64,9 @@ class RandomAccessList extends Support {
   def tail_RAL[T](ts: MyList[Digit[T]]) = unconsTree_RAL(ts)._2
   def size_RAL[T](ts: MyList[Digit[T]]): Int = {
     if (isEmpty_RAL(ts)) return 0
-    if (ts.car.d == 0) {
-      return size_RAL(ts.cdr)
-    } else {
-      return sizeTree_RAL(ts.car.t) + size_RAL(ts.cdr)
+    ts.car.d match {
+      case 0 => size_RAL(ts.cdr)
+      case _ => sizeTree_RAL(ts.car.t) + size_RAL(ts.cdr)
     }
   }
 
@@ -89,10 +83,9 @@ class RandomAccessList extends Support {
   }
   def updateTree_RAL[T](i: Int, v: T, t: Tree[T]): Tree[T] = {
     if (isLeaf_RAL(t)) {
-      if (i == 0) {
-        return leaf_RAL(v)
-      } else {
-        return emptyLeaf_RAL()
+      i match {
+        case 0 => leaf_RAL(v)
+        case _ => emptyLeaf_RAL()
       }
     } else {
       if (i < (t.w / 2)) {
@@ -106,44 +99,46 @@ class RandomAccessList extends Support {
 
   // ral[i]
   def lookup_RAL[T](i: Int, ral: MyList[Digit[T]]): T = {
-    if (ral.car.d == 0) {
-      return lookup_RAL(i, ral.cdr)
-    } else {
-      if (i < sizeTree_RAL(ral.car.t)) {
-        return lookupTree_RAL(i, ral.car.t)
-      } else {
-        return lookup_RAL(i - sizeTree_RAL(ral.car.t), ral.cdr)
+    var s = sizeTree_RAL(ral.car.t)
+    ral.car.d match {
+      case 0 => lookup_RAL(i, ral.cdr)
+      case _ => {
+        if (i < s) {
+          lookupTree_RAL(i, ral.car.t)
+        } else {
+          lookup_RAL(i - s, ral.cdr)
+        }
       }
     }
   }
 
   // ral[i] = v
   def update_RAL[T](i: Int, v: T, ral: MyList[Digit[T]]): MyList[Digit[T]] = {
-    if (ral.car.d == 0) {
-      return MyCons(zero_RAL(), update_RAL(i, v, ral.cdr))
-    } else {
-      if (i < sizeTree_RAL(ral.car.t)) {
-        return MyCons(Digit(1, updateTree_RAL[T](i, v, ral.car.t)), ral.cdr)
-      } else {
-        return MyCons(Digit(1, ral.car.t), update_RAL(i - sizeTree_RAL(ral.car.t), v, ral.cdr))
+    var s = sizeTree_RAL(ral.car.t)
+    ral.car.d match {
+      case 0 => MyCons(zero_RAL(), update_RAL(i, v, ral.cdr))
+      case _ => {
+        if (i < s) {
+          MyCons(Digit(1, updateTree_RAL(i, v, ral.car.t)), ral.cdr)
+        } else {
+          MyCons(Digit(1, ral.car.t), update_RAL(i - s, v, ral.cdr))
+        }
       }
     }
   }
 
   def fromList_RAL[T](l: MyList[T]): MyList[Digit[T]] = {
-    if (l == MyNil) {
-      return MyNil
-    } else {
-      return cons_RAL(l.car, fromList_RAL(l.cdr))
+    (l == MyNil) match {
+      case true => return MyNil
+      case _ => cons_RAL(l.car, fromList_RAL(l.cdr))
     }
   }
 
   // MyList[MyList[T]] -> MyList[Digit[MyList[Digit[T]]]] (2D random access list)
   def fromList2D_RAL[T](l: MyList[MyList[T]]): MyList[Digit[MyList[Digit[T]]]] = {
-    if (l == MyNil) {
-      return MyNil
-    } else {
-      return cons_RAL(fromList_RAL(l.car), fromList2D_RAL(l.cdr))
+    (l == MyNil) match {
+      case true => return MyNil
+      case _ => cons_RAL(fromList_RAL(l.car), fromList2D_RAL(l.cdr))
     }
   }
   // return l[y][x]
@@ -155,17 +150,15 @@ class RandomAccessList extends Support {
 
   // create array filled with a constant
   def constant_RAL[T](size: Int, v: T): MyList[Digit[T]] = {
-    if (size == 0) {
-      return MyNil
-    } else {
-      return cons_RAL(v, constant_RAL(size - 1, v))
+    size match {
+      case 0 => return MyNil
+      case _ => cons_RAL(v, constant_RAL(size - 1, v))
     }
   }
   def constant2D_RAL[T](h: Int, w: Int, v: T): MyList[Digit[MyList[Digit[T]]]] = {
-    if (h == 0) {
-      return MyNil
-    } else {
-      return cons_RAL(constant_RAL(w, v), constant2D_RAL(h - 1, w, v))
+    h match {
+      case 0 => return MyNil
+      case _ => cons_RAL(constant_RAL(w, v), constant2D_RAL(h - 1, w, v))
     }
   }
 

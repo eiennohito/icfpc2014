@@ -1,12 +1,5 @@
 Hello, this is the entry of 2014 ICFPC by OKeiHan Team from Japan.
 
-We have implemented (Mini)Scala -> GCC compiler... in Scala using Scala macros!
-Yes, for easier development we use syntactic trees from Scala macros and produce
-a map with special AST for each function that is defined in a "compilation unit".
-Macros are good! if the hardware is a LISP machine, a good solution definitely
-should use macros!
-
-
 You need to have Java (1.6+) and sbt (http://www.scala-sbt.org/) installed, rest
 will be managed by sbt.
 
@@ -22,5 +15,41 @@ Multiple main classes detected, select one to run:
  [1] jp.ac.kyotou.kansai.ModFile
  [2] jp.ac.kyotou.kansai.AI
 
-Enter number: 2
-(Yes, select the AI file)
+Enter number:
+
+Our file that is used to compile AI program is jp.ac.kyotou.kansai.sune2AI
+
+
+=============================
+
+We have implemented (Mini)Scala -> GCC compiler... in Scala using Scala macros!
+Yes, for easier development we use syntactic trees from Scala macros and produce
+a map with special AST for each function that is defined in a "compilation unit".
+Macros are good! if the hardware is a LISP machine, a good solution definitely
+should use macros!
+
+Compared to the solution we have submitted for the lightning division,
+3 days of coding produced a good result both on the compiler side an on the AI side as well.
+From the very beginning we had separation to "system" level, and "application" level.
+"System" people (the two of us) were developing a compiler from Scala AST to GCC code,
+and application people were thinking about AI.
+
+After three days, as a person who have been working solely on the compiler side,
+I am proud to present MiniScala to GCC compiler.
+I have understood all the usages of closures very late, and was able to produce only
+log-time access "arrays" abusing closures, but they can be much more easily used
+to produce object layout in memory.
+It was very fun coding a compiler for this LISP machine (and Scala).
+
+MiniScala features:
+1) Can be used as a simple Scala problem for debug.
+2) Supports sort of clean syntax (however I have implemented pattern matching only 1:30 before the EOL)
+3) Abusing closures for log time arrays (I assume that was supposed to abuse for every participant)
+4) And some functional data structures on top of our compilers do their magic
+
+Refer to
+jp/ac/kyotou/kansai/Test.scala
+jp/ac/kyotou/kansai/ArrayEmitterTest.scala
+jp/ac/kyotou/kansai/PatternMatchingTestfield.scala
+for the features that are supported in our language.
+

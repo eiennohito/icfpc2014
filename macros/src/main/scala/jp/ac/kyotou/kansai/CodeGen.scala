@@ -21,7 +21,7 @@ object CodeGen {
       case Block(content) => variables ++= collectLocalVars(content, args)
       case WhileStatement(cond, body) => {
         variables ++= collectLocalVarsExp(cond, args)
-        variables ++ collectLocalVars(body, args)
+        variables ++= collectLocalVars(body, args)
       }
       case _ => ()
     })

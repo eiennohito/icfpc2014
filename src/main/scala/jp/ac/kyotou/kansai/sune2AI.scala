@@ -2,6 +2,9 @@ package jp.ac.kyotou.kansai
 
 @gccCode
 class sune2AI extends Support {
+  /*
+    List Utility Code
+  */
   def arrayInit(n : Int, value : Int) : MyList[Int] = {
     if (n == 0) {
       return MyNil
@@ -66,25 +69,10 @@ class sune2AI extends Support {
     return 1 + arraySize2D(lst.cdr)
   }
 
-  def thereIsVisibleGhost(ghosts : MyList[Ghost], y : Int, x : Int) : Boolean = {
-    if (ghosts == MyNil) {
-      return false
-    }
-    var flag = true
-    if (ghosts.car.pos.x != x) {
-      flag = false
-    }
-    if (ghosts.car.pos.y != y) {
-      flag = false
-    }
-    if (flag) {
-      if (ghosts.car.vitality != 2) {
-        return true
-      }
-    }
-    return thereIsVisibleGhost(ghosts.cdr, y, x)
-  }
 
+  /*
+      Rapid Queue Code
+  */
   def rev_aux(l: MyList[Int], r: MyList[Int]): MyList[Int] = {
     if (l == MyNil) return r
     return rev_aux(l.cdr, MyCons(l.car, r))
@@ -113,6 +101,115 @@ class sune2AI extends Support {
   }
   def head(q: MyQueue): Int = q.f.car
   def tail(q: MyQueue): MyQueue = checkf(MyQueue(q.f.cdr, q.b))
+
+  /*
+      sune2AI Code
+  */
+  case class Point(x : Int, y : Int)
+  case class Ghost(vitality : Int, pos : Point, direction : Int)
+  case class LambdaMan(vitality : Int, pos : Point, rest : Int)
+  case class World(map : MyList[MyList[Int]], lambdaMan : LambdaMan, ghosts: MyList[Ghost], rest : Int)
+
+  /*
+      Ghost Utility Code
+  */
+  def thereIsVisibleGhost(ghosts : MyList[Ghost], y : Int, x : Int) : Boolean = {
+    if (ghosts == MyNil) {
+      return false
+    }
+    var flag = true
+    if (ghosts.car.pos.x != x) {
+      flag = false
+    }
+    if (ghosts.car.pos.y != y) {
+      flag = false
+    }
+    if (flag) {
+      if (ghosts.car.vitality != 2) {
+        return true
+      }
+    }
+    return thereIsVisibleGhost(ghosts.cdr, y, x)
+  }
+
+  def addVisibleGhostToMap(ghosts : MyList[Ghost], map : MyList[MyList[Int]]) : MyList[MyList[Int]] = {
+    if (ghosts == MyNil) return map
+    var res = addVisibleGhostToMap(ghosts.cdr, map)
+    var ghost = ghosts.car
+    if (ghost.vitality != 2) {
+      res = arraySet2D(res, ghost.pos.y, ghost.pos.x, 10)
+    }
+    return res
+  }
+
+    def getSafeDirection(ghosts : MyList[Ghost], myPos : Point) : MyList[Int] = {
+    if (ghosts == MyNil) {
+      return MyList(1,1,1,1)
+    }
+
+    var res = getSafeDirection(ghosts.cdr, myPos)
+
+    var dy = MyList(-1,0,1,0)
+    var dx = MyList(0,1,0,-1)
+    var ghost = ghosts.car
+    var ghostNextY = ghost.pos.y + arrayGet(dy, ghost.direction)
+    var ghostNextX = ghost.pos.x + arrayGet(dx, ghost.direction)
+    var d = 0
+    var yy = 0
+    var xx = 0
+    var flag1 = false
+    var flag2 = false
+
+    // Are gost
+    while (d < 4) {
+      yy = myPos.y + arrayGet(dy, d)
+      xx = myPos.x + arrayGet(dx, d)
+      flag1 = false
+      flag2 = true
+      if (ghost.pos.x != xx) flag2 = false
+      if (ghost.pos.y != yy) flag2 = false
+      if (flag2) flag1 = true
+      flag2 = true
+      if (ghostNextX != xx) flag2 = false
+      if (ghostNextY != yy) flag2 = false
+      if (flag2) flag1 = true
+      flag2 = true
+      if (ghost.pos.x != xx + arrayGet(dx, d)) flag2 = false
+      if (ghost.pos.y != yy + arrayGet(dy, d)) flag2 = false
+      if (flag2) flag1 = true
+
+      if (flag1) {
+        res = arraySet(res, d, 0)
+      }
+      d = d + 1
+    }
+    return res
+  }
+
+  /*
+      Enty Point
+  */
+  def entryPoint(world: Int, undoc: Int): (Int,  (Int,World) => (Int, Int)) = {
+    return (0,step)
+  }
+
+  /*
+      Step Function
+  */
+  def step(state : Int, argWorld : World) : (Int, Int) = {
+    var myMap = addVisibleGhostToMap(argWorld.ghosts, argWorld.map)
+    var world = World(myMap, argWorld.lambdaMan, argWorld.ghosts, 0)
+    var pos = world.lambdaMan.pos
+    var safeDirection = MyList(1,1,1,1)
+    if (world.lambdaMan.vitality == 0) {
+      safeDirection = getSafeDirection(world.ghosts, pos)
+    }
+    // debug(safeDirection)
+    var nextDirection = bfs(world, safeDirection)
+    // debug(nextDirection)
+    return (0, nextDirection)
+  }
+
 
   def bfs(world : World, safeDirection : MyList[Int]) : Int = {
     var myPos = world.lambdaMan.pos
@@ -238,81 +335,10 @@ class sune2AI extends Support {
     return lastDirection
   }
 
-  def getSafeDirection(ghosts : MyList[Ghost], myPos : Point) : MyList[Int] = {
-    if (ghosts == MyNil) {
-      return MyList(1,1,1,1)
-    }
 
-    var res = getSafeDirection(ghosts.cdr, myPos)
-
-    var dy = MyList(-1,0,1,0)
-    var dx = MyList(0,1,0,-1)
-    var ghost = ghosts.car
-    var ghostNextY = ghost.pos.y + arrayGet(dy, ghost.direction)
-    var ghostNextX = ghost.pos.x + arrayGet(dx, ghost.direction)
-    var d = 0
-    var yy = 0
-    var xx = 0
-    var flag1 = false
-    var flag2 = false
-    while (d < 4) {
-      yy = myPos.y + arrayGet(dy, d)
-      xx = myPos.x + arrayGet(dx, d)
-      flag1 = false
-      flag2 = true
-      if (ghost.pos.x != xx) flag2 = false
-      if (ghost.pos.y != yy) flag2 = false
-      if (flag2) flag1 = true
-      flag2 = true
-      if (ghostNextX != xx) flag2 = false
-      if (ghostNextY != yy) flag2 = false
-      if (flag2) flag1 = true
-      flag2 = true
-      if (ghost.pos.x != xx + arrayGet(dx, d)) flag2 = false
-      if (ghost.pos.y != yy + arrayGet(dy, d)) flag2 = false
-      if (flag2) flag1 = true
-
-      if (flag1) {
-        res = arraySet(res, d, 0)
-      }
-      d = d + 1
-    }
-    return res
-  }
-
-  def addVisibleGhostToMap(ghosts : MyList[Ghost], map : MyList[MyList[Int]]) : MyList[MyList[Int]] = {
-    if (ghosts == MyNil) return map
-    var res = addVisibleGhostToMap(ghosts.cdr, map)
-    var ghost = ghosts.car
-    if (ghost.vitality != 2) {
-      res = arraySet2D(res, ghost.pos.y, ghost.pos.x, 10)
-    }
-    return res
-  }
-
-  case class Point(x : Int, y : Int)
-  case class Ghost(vitality : Int, pos : Point, direction : Int)
-  case class LambdaMan(vitality : Int, pos : Point, rest : Int)
-  case class World(map : MyList[MyList[Int]], lambdaMan : LambdaMan, ghosts: MyList[Ghost], rest : Int)
-
-  def step(state : Int, argWorld : World) : (Int, Int) = {
-    var myMap = addVisibleGhostToMap(argWorld.ghosts, argWorld.map)
-    var world = World(myMap, argWorld.lambdaMan, argWorld.ghosts, 0)
-    var pos = world.lambdaMan.pos
-    var safeDirection = MyList(1,1,1,1)
-    if (world.lambdaMan.vitality == 0) {
-      safeDirection = getSafeDirection(world.ghosts, pos)
-    }
-    // debug(safeDirection)
-    var nextDirection = bfs(world, safeDirection)
-    // debug(nextDirection)
-    return (0, nextDirection)
-  }
-
-  def entryPoint(world: Int, undoc: Int): (Int,  (Int,World) => (Int, Int)) = {
-    return (0,step)
-  }
-
+  /*
+    Debug on Scala Utility Code
+  */
   def myMain() : Int = {
     var map = MyList(
       MyList(1,1,2,1),

@@ -174,6 +174,7 @@ class Rewriter(classes: Map[String, CaseClassDefinition]) {
       case FunCall(nm, args, _) => FunCall(nm, args.map(rewriteExpression))
       case ConsAst(left, right) => ConsAst(rewriteExpression(left), rewriteExpression(right))
       case Reference("MyNil", _) => Literal(0)
+      case EmptyExpr => LLEmitCode(Nil)
       case x => x
     }
   }

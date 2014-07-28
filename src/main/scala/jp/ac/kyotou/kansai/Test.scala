@@ -115,6 +115,10 @@ class Something extends Support {
     y.a + x.a
   }
 
+  def unitReturn: Unit = {
+    if (false) return else return
+  }
+
 }
 
 object Something extends AstCleanup {

@@ -69,11 +69,13 @@ case class LLEmitCode(code: List[Code], functions: List[String] = Nil) extends E
 //won't appear in the output
 case class ApplicationAst(funcName: String, context: ExprAst, args: List[ExprAst], ctxType: String) extends ExprAst
 case class ThisRefAst(name: String) extends ExprAst
+case object EmptyExpr extends ExprAst
 
 object ForbiddenAsts {
   val forbidden = Set(
     "ApplicationAst",
-    "ThisRefAst"
+    "ThisRefAst",
+    "EmptyExpr"
   )
 
   def check(candadates: TraversableOnce[StructureAst]): List[StructureAst] = {

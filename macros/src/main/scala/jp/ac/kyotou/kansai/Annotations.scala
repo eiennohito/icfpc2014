@@ -96,6 +96,7 @@ class gccCodeMacroImpl(val c: Context) {
     case ast.CarAst(target) => q"jp.ac.kyotou.kansai.CarAst(${liftExpr(target)})"
     case ast.CdrAst(target) => q"jp.ac.kyotou.kansai.CdrAst(${liftExpr(target)})"
     case ast.ThisRefAst(name) => q"jp.ac.kyotou.kansai.ThisRefAst($name)"
+    case ast.EmptyExpr => q"jp.ac.kyotou.kansai.EmptyExpr"
     case ast.IfExpression(cond, tb, fb) =>
       q"jp.ac.kyotou.kansai.IfExpression($cond, $tb, $fb)"
     case _ => throw new MacroException(s"unsupported expr ast for conversion $x")
@@ -137,6 +138,7 @@ class gccCodeMacroImpl(val c: Context) {
         transformBody(thenp),
         transformBody(elsep)
       )
+      case q"()" => EmptyExpr
       case x => throw new MacroException(s"unsupported expression pattern $x")
     }
   }

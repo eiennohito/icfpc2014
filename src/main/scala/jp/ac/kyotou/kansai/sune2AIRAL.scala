@@ -1,4 +1,4 @@
-[package jp.ac.kyotou.kansai
+package jp.ac.kyotou.kansai
 
 @gccCode
 class sune2AIRAL extends Support {

@@ -164,7 +164,7 @@ class gccCodeMacroImpl(val c: Context) {
 
   def transformPattern(tree: Tree): (CasePatternAst, Option[ExprAst], StatementAst) = {
     tree match {
-      case cq"$pat => $bdy" => (transformPatternBody(pat), None, transformStatement(bdy))
+      case cq"$pat => $bdy" => (transformPatternBody(pat), None, ast.Block(transformBody(bdy)))
       case cq"$pat if $cnd => $bdy" => (transformPatternBody(pat), Some(transformExprTree(cnd)), transformStatement(bdy))
     }
   }
@@ -208,8 +208,9 @@ class gccCodeMacroImpl(val c: Context) {
         transformExprTree(cond), transformBody(body)
       )
       case q"$a match { case ..$b }" => ast.Statement(transformExprTree(statement))
-      case q"${x: Int}" => Statement(ast.Literal(x))
-      case q"()" => Statement(EmptyExpr)
+      case q"${x: Int}" => ast.Statement(ast.Literal(x))
+      case q"${x: TermName}" => ast.Statement(ast.Reference(x.decodedName.toString, statement.tpe.typeSymbol.fullName))
+      case q"()" => ast.Statement(EmptyExpr)
       case x => throw new MacroException(s"unsupported Scala statement: $x")
     }
   }

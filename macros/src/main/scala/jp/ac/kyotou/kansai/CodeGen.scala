@@ -15,7 +15,9 @@ object CodeGen {
   def collectLocalVars(code: List[StatementAst], args: List[String]): List[String] = {
     var variables: Set[String] = Set()
     code.foreach(c => c match {
-      case Assign(name, _) => variables += name
+      case Assign(name, body) =>
+        variables += name
+        variables ++= collectLocalVarsExp(body, args)
       case Statement(expr) => variables ++= collectLocalVarsExp(expr, args)
       case Return(expr) => variables ++= collectLocalVarsExp(expr, args)
       case Block(content) => variables ++= collectLocalVars(content, args)
